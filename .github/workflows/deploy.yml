@@ -4,9 +4,6 @@ on:
   push:
     branches: ["main"]
 
-permissions:
-  contents: read
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -19,7 +16,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: "npm"
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
@@ -29,8 +25,7 @@ jobs:
 
       - name: Prepare deploy folder
         run: |
-          rm -rf deploy
-          mkdir -p deploy
+          mkdir deploy
           cp -r dist/public/* deploy/
           echo "jksubindo.eu.org" > deploy/CNAME
 
@@ -45,6 +40,5 @@ jobs:
           git config user.email "github-actions@github.com"
           git add .
           git commit -m "deploy"
-
           git remote add origin https://x-access-token:${GH_TOKEN}@github.com/EruBot/erubot.github.io.git
           git push -f origin main
