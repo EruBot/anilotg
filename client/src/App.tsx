@@ -24,7 +24,7 @@ function App() {
             {/* Contoh halaman lain */}
             {/* <Route path="/about" element={<About />} /> */}
             {/* <Route path="/members" element={<Members />} /> */}
-            <Route path="/event" element={<Event />} /> */}
+            <Route path="/event" element={<Event />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
