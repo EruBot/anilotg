@@ -24,6 +24,7 @@ export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '
         alt={name}
         className="w-full h-full object-cover"
         loading="lazy"
+        decoding="async"
       />
     </div>
   );
