@@ -172,17 +172,21 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {members.map((member, index) => (
-              <div
-                key={member.id}
-                className="stagger-item"
-                onMouseEnter={() => setHoveredMember(member.id)}
-                onMouseLeave={() => setHoveredMember(null)}
-              >
-                <MemberCard name={member.name} isAdmin={false} />
-              </div>
-            ))}
-          </div>
+  {members.map((member, index) => (
+    <div
+      key={member.id}
+      className="stagger-item"
+      onMouseEnter={() => setHoveredMember(member.id)}
+      onMouseLeave={() => setHoveredMember(null)}
+    >
+      <MemberCard
+        name={member.name}
+        isAdmin={false}
+        loading={index < 8 ? "eager" : "lazy"}
+      />
+    </div>
+  ))}
+</div>
         </div>
       </section>
 
