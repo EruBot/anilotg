@@ -4,13 +4,14 @@ import { Avatar } from './Avatar';
 interface MemberCardProps {
   name: string;
   isAdmin?: boolean;
+  loading?: "eager" | "lazy";
 }
 
-export const MemberCard: React.FC<MemberCardProps> = ({ name, isAdmin = false }) => {
+export const MemberCard: React.FC<MemberCardProps> = ({ name, isAdmin = false, loading }) => {
   return (
     <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/50 bg-white/70 hover:bg-white/80 transition-transform transition-shadow duration-300 hover:shadow-lg hover:scale-105 group">
       <div className="relative">
-        <Avatar name={name} size="md" />
+        <Avatar name={name} size="md" loading={loading} />
         {isAdmin && (
           <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg">
             ★
