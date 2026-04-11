@@ -1,4 +1,3 @@
-// export default function Event() {
 import React from "react";
 
 type TeamSlot = {
@@ -48,9 +47,28 @@ const prizes = [
   "Juara 3 — Status podium",
 ];
 
+const moneyPrizes = [
+  "Juara 1 — Rp. -",
+  "Juara 2 — Rp. -",
+  "Juara 3 — Rp. -",
+];
+
 export default function EventPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+      <div className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur-md">
+        <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+          <a
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10"
+          >
+            ← Kembali ke Home
+          </a>
+        </div>
+      </div>
+
+      <div className="h-16" />
+
       <section className="relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.28),transparent_50%),radial-gradient(circle_at_bottom_right,rgba(236,72,153,0.18),transparent_35%)]" />
         <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
@@ -86,6 +104,25 @@ export default function EventPage() {
                 Lihat Detail
               </a>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+          <h2 className="text-2xl font-bold">Hadiah Uang</h2>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Hadiah turnamen ditampilkan dalam format uang.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {moneyPrizes.map((prize) => (
+              <div
+                key={prize}
+                className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 text-sm leading-6 text-slate-200"
+              >
+                {prize}
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -171,9 +208,9 @@ export default function EventPage() {
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-bold">16 Slot Tim</h2>
+              <h2 className="text-2xl font-bold">Daftar Slot</h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Slot akan terisi sesuai urutan pendaftaran.
+                Setiap slot kosong bisa langsung didaftarkan ke grup panitia.
               </p>
             </div>
             <div className="rounded-full border border-fuchsia-400/20 bg-fuchsia-500/10 px-4 py-2 text-sm font-medium text-fuchsia-200">
@@ -192,6 +229,14 @@ export default function EventPage() {
                 <p className="mt-3 text-sm leading-6 text-slate-300">
                   Slot tersedia untuk tim yang sudah siap bertanding.
                 </p>
+                <a
+                  href="https://t.me/grup_anime_indo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-fuchsia-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-fuchsia-400"
+                >
+                  Daftar
+                </a>
               </div>
             ))}
           </div>
@@ -221,6 +266,56 @@ export default function EventPage() {
           </div>
         </div>
       </section>
+
+      <footer className="bg-white/80 backdrop-blur-sm border-t border-purple-100 py-12">
+        <div className="container">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm">
+                  A
+                </div>
+                <span className="font-bold zen-text-gradient">ANILO</span>
+              </div>
+              <p className="text-slate-600 text-sm">
+                Anime Lovers Indo - Komunitas anime terbesar di Telegram Indonesia
+              </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-slate-800 mb-4">Informasi</h4>
+              <ul className="space-y-2 text-sm text-slate-600">
+                <li>
+                  <span className="font-medium">Dibuat:</span> {communityStats.foundedDate}
+                </li>
+                <li>
+                  <span className="font-medium">Member:</span> {communityStats.totalMembers}
+                </li>
+                <li>
+                  <span className="font-medium">Chat/Hari:</span> {communityStats.chatPerDay}
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-slate-800 mb-4">Ikuti Kami</h4>
+              <a
+                href={communityStats.telegramLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-100 text-purple-600 hover:bg-purple-200 transition-colors text-sm font-medium"
+              >
+                <Send size={16} />
+                Telegram
+              </a>
+            </div>
+          </div>
+
+          <div className="border-t border-purple-100 pt-8 text-center text-sm text-slate-600">
+            <p>© 2020-{new Date().getFullYear()} Anime Lovers Indo. Dibuat dengan ❤️ untuk komunitas anime Indonesia.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
