@@ -9,7 +9,7 @@ interface MemberCardProps {
 
 export const MemberCard: React.FC<MemberCardProps> = ({ name, isAdmin = false, loading }) => {
   return (
-    <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/50 bg-white/70 hover:bg-white/80 transition-transform transition-shadow duration-300 hover:shadow-lg hover:scale-105 group">
+    <div className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/70 hover:bg-white/80 transition-transform transition-shadow duration-300 hover:shadow-lg hover:scale-105 group">
       <div className="relative">
         <Avatar name={name} size="md" loading={loading} />
         {isAdmin && (
