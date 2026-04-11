@@ -44,15 +44,15 @@ const schedule = [
 ];
 
 const prizes = [
-  "Juara 1 — Trofi digital + status champion",
-  "Juara 2 — Status runner-up",
-  "Juara 3 — Status podium",
+  "Juara 1 — ",
+  "Juara 2 — ",
+  "Juara 3 — ",
 ];
 
-const moneyPrizes = [
-  "Juara 1 — Rp. -",
-  "Juara 2 — Rp. -",
-  "Juara 3 — Rp. -",
+const WinnerList = [
+  "Juara 1 — ",
+  "Juara 2 — ",
+  "Juara 3 — ",
 ];
 
 export default function EventPage() {
@@ -115,17 +115,17 @@ export default function EventPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
-          <h2 className="text-2xl font-bold">Hadiah Uang</h2>
+          <h2 className="text-2xl font-bold">PEMENANG 🏆</h2>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Hadiah turnamen ditampilkan dalam format uang.
+            Soon.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {moneyPrizes.map((prize) => (
+            {WinnerList.map((Winlist) => (
               <div
-                key={prize}
+                key={Winlist}
                 className="rounded-2xl border border-white/10 bg-black/10 px-4 py-4 text-sm leading-6 text-slate-200"
               >
-                {prize}
+                {Winlist}
               </div>
             ))}
           </div>
