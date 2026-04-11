@@ -1,4 +1,6 @@
 import React from "react";
+import { communityStats } from "@/lib/communityData";
+import { Send } from "lucide-react";
 
 type TeamSlot = {
   slot: string;
