@@ -72,7 +72,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6 fade-in-up" style={{ animationDelay: '0.4s' }}>
             <a
               href="/event"
-              className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-800 via-cyan-600 to-teal-500 text-white font-bold uppercase tracking-wider hover:shadow-[0_0_30px_rgba(6,182,212,0.7)] hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 border border-cyan-400/30"
+              className="px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-600 text-white font-extrabold uppercase tracking-widest hover:shadow-[0_0_25px_rgba(245,158,11,0.6)] hover:brightness-110 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 border border-amber-300/40"
               >
               <Calendar size={20} />
               Event Tournament MLBB
