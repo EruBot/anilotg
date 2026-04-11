@@ -4,9 +4,10 @@ interface AvatarProps {
   name: string;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
+  loading?: "eager" | "lazy";
 }
 
-export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '' }) => {
+export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '', loading = "lazy" }) => {
   // Generate avatar URL using DiceBear API with anime style
   const encodedName = encodeURIComponent(name);
   const avatarUrl = `https://api.dicebear.com/7.x/lorelei/png?seed=${encodedName}&scale=80&backgroundColor=c0aede,d1d4f9,b6e3f5,ffd6e8,fcbad3`;
@@ -23,7 +24,7 @@ export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '
         src={avatarUrl}
         alt={name}
         className="w-full h-full object-cover"
-        loading="lazy"
+        loading={loading}
         decoding="async"
       />
     </div>
