@@ -71,12 +71,13 @@ export default function Home() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6 fade-in-up" style={{ animationDelay: '0.4s' }}>
             <a
-  href="/event"
-  className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium hover:shadow-md transition-all duration-300"
->
-  <Calendar size={16} />
-  Event Tournament MLBB
-</a>
+              href="/event"
+              className="px-8 py-4 rounded-full bg-white border border-purple-200 text-purple-600 font-medium hover:bg-purple-50 transition-all duration-300 flex items-center justify-center gap-2"
+              >
+              <Calendar size={20} />
+              Event Tournament MLBB
+            </a>
+            
             <a
               href={communityStats.telegramLink}
               target="_blank"
