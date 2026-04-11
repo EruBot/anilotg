@@ -1,4 +1,4 @@
-name: Deploy Website
+name: Auto Deploy
 
 on:
   push:
@@ -6,11 +6,9 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
-  build-deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,7 +18,8 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
@@ -28,20 +27,24 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Copy build
+      - name: Prepare deploy folder
         run: |
-          mkdir deploy
-          cp -r dist/public/* deploy
+          rm -rf deploy
+          mkdir -p deploy
+          cp -r dist/public/* deploy/
           echo "jksubindo.eu.org" > deploy/CNAME
 
       - name: Deploy to GitHub Pages repo
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           cd deploy
           git init
+          git branch -M main
           git config user.name "github-actions"
-          git config user.email "actions@github.com"
+          git config user.email "github-actions@github.com"
           git add .
           git commit -m "deploy"
-          git branch -M main
-          git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/EruBot/erubot.github.io.git
+
+          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/EruBot/erubot.github.io.git
           git push -f origin main
