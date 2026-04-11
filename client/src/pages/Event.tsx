@@ -56,6 +56,9 @@ const moneyPrizes = [
 ];
 
 export default function EventPage() {
+  React.useEffect(() => {
+  document.title = "Tournament MLBB ANILO | JKSUBINDO";
+}, []);
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
       <div className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur-md">
