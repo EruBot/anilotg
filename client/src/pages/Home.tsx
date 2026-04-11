@@ -4,6 +4,7 @@ import { MemberCard } from '@/components/MemberCard';
 import { StatCard } from '@/components/StatCard';
 import { admins, members, communityStats } from '@/lib/communityData';
 import { Send, Users, MessageCircle, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 
 export default function Home() {
   const [hoveredMember, setHoveredMember] = useState<string | null>(null);
@@ -69,6 +70,13 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6 fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <a
+  href="/event"
+  className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-medium hover:shadow-md transition-all duration-300"
+>
+  <Calendar size={16} />
+  Event Tournament MLBB
+</a>
             <a
               href={communityStats.telegramLink}
               target="_blank"
