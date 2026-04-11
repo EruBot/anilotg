@@ -9,7 +9,7 @@ interface AvatarProps {
 export const Avatar: React.FC<AvatarProps> = ({ name, size = 'md', className = '' }) => {
   // Generate avatar URL using DiceBear API with anime style
   const encodedName = encodeURIComponent(name);
-  const avatarUrl = `https://api.dicebear.com/7.x/anime/svg?seed=${encodedName}&scale=80&backgroundColor=c0aede,d1d4f9,b6e3f5,ffd6e8,fcbad3`;
+  const avatarUrl = `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodedName}&scale=80&backgroundColor=c0aede,d1d4f9,b6e3f5,ffd6e8,fcbad3`;
 
   const sizeClasses = {
     sm: 'w-10 h-10',
