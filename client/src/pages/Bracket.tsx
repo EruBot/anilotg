@@ -61,17 +61,19 @@ export default function BracketPage() {
 
         let data: Match[] = [];
 
-        // SUPPORT ARRAY
-        if (Array.isArray(json)) {
-          data = normalize(json);
-        }
+try {
+  if (Array.isArray(json)) {
+    data = normalize(json);
+  } else if (json && typeof json === "object") {
+    const obj = json as any;
 
-        // SUPPORT OBJECT {matches}
-        else if (json && typeof json === "object") {
-          if (Array.isArray(json.matches)) {
-            data = normalize(json.matches);
-          }
-        }
+    if (Array.isArray(obj.matches)) {
+      data = normalize(obj.matches);
+    }
+  }
+} catch {
+  data = [];
+}
 
         setMatches(data);
       } catch {
