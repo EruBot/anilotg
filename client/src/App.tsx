@@ -11,6 +11,8 @@ import NotFound from "@/pages/NotFound";
 // import About from "./pages/About";
 // import Members from "./pages/Members";
 import Event from  "./pages/Event";
+import Bracket from  "./pages/Bracket";
+
 
 function App() {
   return (
