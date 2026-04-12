@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ChevronRight,
   Clock3,
   Crown,
   Medal,
@@ -10,7 +11,6 @@ import {
   UserRound,
   Users,
   X,
-  ChevronRight,
 } from "lucide-react";
 
 type Match = {
@@ -119,7 +119,7 @@ const buildMatch = (
   teamB: unknown,
   source?: unknown
 ): Match => {
-  const src = isPlainObject(source) ? source : {};
+  const src = isPlainObject(source) ? (source as any) : {};
   const a = cleanText(teamA) || "TBD";
   const b = cleanText(teamB) || "TBD";
 
@@ -173,7 +173,7 @@ const normalizeBracket = (raw: APIData): BracketState => {
   const thirdSource = Array.isArray(input.third) ? input.third : [];
 
   const round1: Match[] = Array.from({ length: 8 }, (_, i) => {
-    const src = isPlainObject(round1Source[i]) ? round1Source[i] : {};
+    const src = isPlainObject(round1Source[i]) ? (round1Source[i] as any) : {};
     return buildMatch(
       i + 1,
       isText(src.teamA) ? src.teamA : `Slot ${i * 2 + 1}`,
@@ -183,7 +183,7 @@ const normalizeBracket = (raw: APIData): BracketState => {
   });
 
   const quarter: Match[] = Array.from({ length: 4 }, (_, i) => {
-    const src = isPlainObject(quarterSource[i]) ? quarterSource[i] : {};
+    const src = isPlainObject(quarterSource[i]) ? (quarterSource[i] as any) : {};
     const fallbackA = round1[i * 2]?.winner || "TBD";
     const fallbackB = round1[i * 2 + 1]?.winner || "TBD";
 
@@ -196,7 +196,7 @@ const normalizeBracket = (raw: APIData): BracketState => {
   });
 
   const semi: Match[] = Array.from({ length: 2 }, (_, i) => {
-    const src = isPlainObject(semiSource[i]) ? semiSource[i] : {};
+    const src = isPlainObject(semiSource[i]) ? (semiSource[i] as any) : {};
     const fallbackA = quarter[i * 2]?.winner || "TBD";
     const fallbackB = quarter[i * 2 + 1]?.winner || "TBD";
 
@@ -208,25 +208,24 @@ const normalizeBracket = (raw: APIData): BracketState => {
     );
   });
 
+  const firstFinal = isPlainObject(finalSource[0]) ? (finalSource[0] as any) : {};
+  const firstThird = isPlainObject(thirdSource[0]) ? (thirdSource[0] as any) : {};
+
   const final: Match[] = [
     buildMatch(
       15,
-      isText(finalSource[0]?.teamA) ? finalSource[0].teamA : semi[0]?.winner || "TBD",
-      isText(finalSource[0]?.teamB) ? finalSource[0].teamB : semi[1]?.winner || "TBD",
-      finalSource[0]
+      isText(firstFinal.teamA) ? firstFinal.teamA : semi[0]?.winner || "TBD",
+      isText(firstFinal.teamB) ? firstFinal.teamB : semi[1]?.winner || "TBD",
+      firstFinal
     ),
   ];
 
   const third: Match[] = [
     buildMatch(
       16,
-      isText(thirdSource[0]?.teamA)
-        ? thirdSource[0].teamA
-        : loserOf(semi[0]),
-      isText(thirdSource[0]?.teamB)
-        ? thirdSource[0].teamB
-        : loserOf(semi[1]),
-      thirdSource[0]
+      isText(firstThird.teamA) ? firstThird.teamA : loserOf(semi[0]),
+      isText(firstThird.teamB) ? firstThird.teamB : loserOf(semi[1]),
+      firstThird
     ),
   ];
 
@@ -257,6 +256,14 @@ const getMatchStatus = (match: Match) => {
   if (match.time) return "Scheduled";
   if (match.teamA !== "TBD" || match.teamB !== "TBD") return "Open";
   return "Pending";
+};
+
+const roundLabel = (id: number) => {
+  if (id <= 8) return "16 Besar";
+  if (id <= 12) return "8 Besar";
+  if (id <= 14) return "Semi Final";
+  if (id === 15) return "Final";
+  return "Juara 3";
 };
 
 export default function BracketPage() {
@@ -434,9 +441,9 @@ export default function BracketPage() {
         onClick={() => openTeam(team, match)}
         className={[
           "group flex w-full items-center justify-between rounded-2xl border px-3 py-2.5 text-left transition-all duration-300",
-          "border-white/10 bg-white/5 hover:border-cyan-400/40 hover:bg-white/10",
-          isWinner ? "bg-gradient-to-r from-fuchsia-500/15 to-cyan-400/15 border-fuchsia-400/30" : "",
-          placeholder ? "opacity-90" : "",
+          "border-slate-200 bg-white hover:border-cyan-300 hover:bg-slate-50",
+          isWinner ? "bg-gradient-to-r from-fuchsia-50 to-cyan-50 border-fuchsia-200" : "",
+          placeholder ? "opacity-95" : "",
         ].join(" ")}
       >
         <div className="min-w-0">
@@ -444,10 +451,10 @@ export default function BracketPage() {
             <span
               className={[
                 "h-2.5 w-2.5 rounded-full",
-                placeholder ? "bg-slate-500" : "bg-cyan-400",
+                placeholder ? "bg-slate-300" : "bg-cyan-500",
               ].join(" ")}
             />
-            <span className="truncate text-sm font-medium text-white">
+            <span className="truncate text-sm font-medium text-slate-900">
               {formatTeamLabel(team, data.participants)}
             </span>
           </div>
@@ -457,13 +464,13 @@ export default function BracketPage() {
               {members.slice(0, 3).map((member) => (
                 <span
                   key={member}
-                  className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-slate-200"
+                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600"
                 >
                   {member}
                 </span>
               ))}
               {members.length > 3 && (
-                <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px] text-slate-300">
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
                   +{members.length - 3}
                 </span>
               )}
@@ -471,9 +478,9 @@ export default function BracketPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2 text-slate-300 transition-transform duration-300 group-hover:translate-x-0.5">
+        <div className="flex items-center gap-2 text-slate-500 transition-transform duration-300 group-hover:translate-x-0.5">
           {isWinner && (
-            <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-300">
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-700">
               Win
             </span>
           )}
@@ -487,29 +494,21 @@ export default function BracketPage() {
     const status = getMatchStatus(match);
     const statusClass =
       status === "Completed"
-        ? "bg-emerald-400/15 text-emerald-300 border-emerald-400/30"
+        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
         : status === "Scheduled"
-          ? "bg-cyan-400/15 text-cyan-300 border-cyan-400/30"
+          ? "bg-cyan-100 text-cyan-700 border-cyan-200"
           : status === "Open"
-            ? "bg-amber-400/15 text-amber-300 border-amber-400/30"
-            : "bg-slate-400/15 text-slate-300 border-slate-400/30";
+            ? "bg-amber-100 text-amber-700 border-amber-200"
+            : "bg-slate-100 text-slate-500 border-slate-200";
 
     return (
-      <div className="rounded-3xl border border-white/10 bg-slate-950/75 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-xl transition-transform duration-300 hover:-translate-y-0.5 hover:border-white/20">
+      <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-md">
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
-              {match.id <= 8
-                ? "Round of 16"
-                : match.id <= 12
-                  ? "Quarter Final"
-                  : match.id <= 14
-                    ? "Semi Final"
-                    : match.id === 15
-                      ? "Final"
-                      : "Juara 3"}
+              {roundLabel(match.id)}
             </p>
-            <h3 className="mt-1 text-sm font-semibold text-white">
+            <h3 className="mt-1 text-sm font-semibold text-slate-900">
               Match {match.id}
             </h3>
           </div>
@@ -529,28 +528,28 @@ export default function BracketPage() {
           <TeamButton team={match.teamB} match={match} isWinner={match.winner === match.teamB} />
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-2 text-xs text-slate-300 sm:grid-cols-2">
-          <div className="rounded-2xl bg-white/5 px-3 py-2">
-            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+        <div className="mt-4 grid grid-cols-1 gap-2 text-xs text-slate-600 sm:grid-cols-2">
+          <div className="rounded-2xl bg-slate-50 px-3 py-2">
+            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
               Winner
             </span>
-            <span className="mt-1 block font-medium text-white">
+            <span className="mt-1 block font-medium text-slate-900">
               {match.winner || "-"}
             </span>
           </div>
-          <div className="rounded-2xl bg-white/5 px-3 py-2">
-            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+          <div className="rounded-2xl bg-slate-50 px-3 py-2">
+            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
               Wasit
             </span>
-            <span className="mt-1 block font-medium text-white">
+            <span className="mt-1 block font-medium text-slate-900">
               {match.wasit || "-"}
             </span>
           </div>
-          <div className="rounded-2xl bg-white/5 px-3 py-2 sm:col-span-2">
-            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+          <div className="rounded-2xl bg-slate-50 px-3 py-2 sm:col-span-2">
+            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
               Time
             </span>
-            <span className="mt-1 block font-medium text-white">
+            <span className="mt-1 block font-medium text-slate-900">
               {match.time || "-"}
             </span>
           </div>
@@ -573,20 +572,20 @@ export default function BracketPage() {
     gradient: string;
   }) => {
     return (
-      <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
-        <div className={`border-b border-white/10 bg-gradient-to-r ${gradient} px-5 py-4`}>
+      <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-lg">
+        <div className={`border-b border-slate-200 bg-gradient-to-r ${gradient} px-5 py-4`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-2.5 backdrop-blur-md">
-                <Icon className="h-5 w-5 text-white" />
+              <div className="rounded-2xl bg-white/70 p-2.5 backdrop-blur-md">
+                <Icon className="h-5 w-5 text-slate-900" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-white">{title}</h2>
-                <p className="text-xs text-white/80">{subtitle}</p>
+                <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+                <p className="text-xs text-slate-700/80">{subtitle}</p>
               </div>
             </div>
 
-            <div className="rounded-full bg-black/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/90">
+            <div className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-slate-700">
               {items.length} match
             </div>
           </div>
@@ -609,7 +608,7 @@ export default function BracketPage() {
           subtitle="8 match awal yang dikelola bot Telegram"
           icon={Shield}
           items={viewMatches}
-          gradient="from-fuchsia-500/20 via-violet-500/20 to-cyan-500/20"
+          gradient="from-fuchsia-50 via-violet-50 to-cyan-50"
         />
       );
     }
@@ -621,7 +620,7 @@ export default function BracketPage() {
           subtitle="Babak quarter final"
           icon={Trophy}
           items={viewMatches}
-          gradient="from-cyan-500/20 via-sky-500/20 to-indigo-500/20"
+          gradient="from-cyan-50 via-sky-50 to-indigo-50"
         />
       );
     }
@@ -633,7 +632,7 @@ export default function BracketPage() {
           subtitle="Babak empat besar"
           icon={Medal}
           items={viewMatches}
-          gradient="from-violet-500/20 via-fuchsia-500/20 to-rose-500/20"
+          gradient="from-violet-50 via-fuchsia-50 to-rose-50"
         />
       );
     }
@@ -645,7 +644,7 @@ export default function BracketPage() {
           subtitle="Penentuan juara 1 & 2"
           icon={Crown}
           items={data.final}
-          gradient="from-amber-500/20 via-orange-500/20 to-rose-500/20"
+          gradient="from-amber-50 via-orange-50 to-rose-50"
         />
 
         <SectionBlock
@@ -653,221 +652,77 @@ export default function BracketPage() {
           subtitle="Perebutan podium"
           icon={Trophy}
           items={data.third}
-          gradient="from-emerald-500/20 via-teal-500/20 to-cyan-500/20"
+          gradient="from-emerald-50 via-teal-50 to-cyan-50"
         />
       </div>
     );
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-sky-50 text-slate-900">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-32 top-[-8rem] h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
-        <div className="absolute right-[-8rem] top-28 h-[30rem] w-[30rem] rounded-full bg-cyan-500/15 blur-3xl" />
-        <div className="absolute bottom-[-10rem] left-1/3 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-3xl" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_28%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_26%)]" />
+        <div className="absolute -left-28 top-[-8rem] h-80 w-80 rounded-full bg-fuchsia-200/40 blur-3xl" />
+        <div className="absolute right-[-8rem] top-24 h-[24rem] w-[24rem] rounded-full bg-cyan-200/40 blur-3xl" />
+        <div className="absolute bottom-[-10rem] left-1/3 h-[22rem] w-[22rem] rounded-full bg-violet-200/35 blur-3xl" />
       </div>
 
-      <main className="relative mx-auto max-w-7xl px-4 py-5 lg:px-6 lg:py-8">
-        <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl lg:p-7">
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(236,72,153,0.08),rgba(139,92,246,0.08),rgba(34,211,238,0.08))]" />
-          <div className="relative grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-end">
+      <main className="relative mx-auto max-w-7xl px-4 py-5 pb-28 lg:px-6 lg:py-7">
+        <header className="rounded-[2rem] border border-slate-200 bg-white/85 p-5 shadow-lg backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-700">
                 <Sparkles className="h-4 w-4" />
-                ANILO · Bracket Navigator
+                Bracket
               </div>
-
-              <h1 className="max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-                Bracket lebih mudah dibaca, lebih cepat, dan tetap kompatibel penuh dengan bot Telegram.
+              <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                ANILO Tournament
               </h1>
-
-              <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-                Tampilan dibagi ke 4 bagian terpisah lewat hash URL supaya lebih ringan di mobile,
-                lebih fokus, dan lebih mudah dipahami saat turnamen berjalan.
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                Tampilan ringan, mobile-friendly, dan sinkron dengan bot Telegram.
               </p>
-
-              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <button
-                  type="button"
-                  onClick={() => setRoute("round16")}
-                  className={[
-                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
-                    view === "round16"
-                      ? "border-fuchsia-400/40 bg-gradient-to-br from-fuchsia-500/20 to-violet-500/20"
-                      : "border-white/10 bg-white/5 hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 1</span>
-                  <span className="mt-1 block text-sm font-semibold text-white">16 Besar</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRoute("quarter")}
-                  className={[
-                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
-                    view === "quarter"
-                      ? "border-cyan-400/40 bg-gradient-to-br from-cyan-500/20 to-sky-500/20"
-                      : "border-white/10 bg-white/5 hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 2</span>
-                  <span className="mt-1 block text-sm font-semibold text-white">8 Besar</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRoute("semi")}
-                  className={[
-                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
-                    view === "semi"
-                      ? "border-violet-400/40 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20"
-                      : "border-white/10 bg-white/5 hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 3</span>
-                  <span className="mt-1 block text-sm font-semibold text-white">Semi Final</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRoute("final")}
-                  className={[
-                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
-                    view === "final"
-                      ? "border-amber-400/40 bg-gradient-to-br from-amber-500/20 to-orange-500/20"
-                      : "border-white/10 bg-white/5 hover:bg-white/10",
-                  ].join(" ")}
-                >
-                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 4</span>
-                  <span className="mt-1 block text-sm font-semibold text-white">Final</span>
-                </button>
-              </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-4 shadow-lg backdrop-blur-xl">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-fuchsia-500/15 p-2.5">
-                    <RefreshCw className="h-5 w-5 text-fuchsia-300" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Live Sync</p>
-                    <p className="text-sm font-semibold text-white">
-                      {loading ? "Syncing bracket..." : error ? "Fallback mode" : "Online"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-300">
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Last sync</span>
-                    <span className="mt-1 block font-medium text-white">
-                      {lastSyncAt
-                        ? lastSyncAt.toLocaleTimeString("id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            second: "2-digit",
-                          })
-                        : "-"}
-                    </span>
-                  </div>
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Teams</span>
-                    <span className="mt-1 block font-medium text-white">{stats.activeTeams}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-4 shadow-lg backdrop-blur-xl">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-cyan-500/15 p-2.5">
-                    <Shield className="h-5 w-5 text-cyan-300" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Bot Ready</p>
-                    <p className="text-sm font-semibold text-white">
-                      /add /win /time /addname /swap
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-300">
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Winners</span>
-                    <span className="mt-1 block font-medium text-white">{stats.winners}</span>
-                  </div>
-                  <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Schedules</span>
-                    <span className="mt-1 block font-medium text-white">{stats.scheduled}</span>
-                  </div>
-                </div>
-              </div>
+            <div className="hidden rounded-2xl bg-slate-50 px-4 py-3 text-right sm:block">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Live Sync</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">
+                {loading ? "Syncing" : error ? "Fallback" : "Online"}
+              </p>
             </div>
           </div>
 
           {error && (
-            <div className="relative mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               {error}
             </div>
           )}
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Teams</p>
+              <p className="mt-1 text-xl font-black text-slate-900">{stats.activeTeams}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Winners</p>
+              <p className="mt-1 text-xl font-black text-slate-900">{stats.winners}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Schedules</p>
+              <p className="mt-1 text-xl font-black text-slate-900">{stats.scheduled}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Profiles</p>
+              <p className="mt-1 text-xl font-black text-slate-900">{stats.registeredTeams}</p>
+            </div>
+          </div>
         </header>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-fuchsia-500/15 to-violet-600/15 p-4 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-fuchsia-500/15 p-2.5">
-                <Users className="h-5 w-5 text-fuchsia-300" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Active Teams</p>
-                <p className="text-2xl font-black text-white">{stats.activeTeams}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-cyan-500/15 to-sky-600/15 p-4 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-cyan-500/15 p-2.5">
-                <Trophy className="h-5 w-5 text-cyan-300" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Winners Set</p>
-                <p className="text-2xl font-black text-white">{stats.winners}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-emerald-500/15 to-teal-600/15 p-4 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-emerald-500/15 p-2.5">
-                <Clock3 className="h-5 w-5 text-emerald-300" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Schedules</p>
-                <p className="text-2xl font-black text-white">{stats.scheduled}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-orange-500/15 to-rose-600/15 p-4 backdrop-blur-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-orange-500/15 p-2.5">
-                <UserRound className="h-5 w-5 text-orange-300" />
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Team Profiles</p>
-                <p className="text-2xl font-black text-white">{stats.registeredTeams}</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mt-8">
-          <div className="mb-4 flex items-end justify-between gap-4">
+        <section className="mt-6">
+          <div className="mb-3 flex items-end justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-700">
                 Bracket Section
               </p>
-              <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">
                 {view === "round16"
                   ? "16 Besar"
                   : view === "quarter"
@@ -877,9 +732,9 @@ export default function BracketPage() {
                       : "Final"}
               </h2>
             </div>
-            <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-200 backdrop-blur-md lg:flex">
-              <ChevronRight className="h-4 w-4 text-cyan-300" />
-              Tap a team to open roster
+            <div className="hidden items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-medium text-slate-600 shadow-sm lg:flex">
+              <RefreshCw className="h-4 w-4 text-cyan-600" />
+              Auto refresh 8s
             </div>
           </div>
 
@@ -887,31 +742,64 @@ export default function BracketPage() {
         </section>
       </main>
 
+      <nav className="fixed inset-x-0 bottom-0 z-40 p-3">
+        <div className="mx-auto max-w-3xl rounded-[1.5rem] border border-slate-200 bg-white/90 p-2 shadow-[0_16px_40px_rgba(15,23,42,0.12)] backdrop-blur-xl">
+          <div className="grid grid-cols-4 gap-2">
+            {(
+              [
+                { key: "round16", label: "16 Besar" },
+                { key: "quarter", label: "8 Besar" },
+                { key: "semi", label: "Semi Final" },
+                { key: "final", label: "Final" },
+              ] as { key: ViewKey; label: string }[]
+            ).map((item) => {
+              const active = view === item.key;
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setRoute(item.key)}
+                  className={[
+                    "rounded-2xl px-3 py-3 text-xs font-semibold transition-all duration-300 sm:text-sm",
+                    active
+                      ? "bg-gradient-to-r from-cyan-600 to-violet-600 text-white shadow-md"
+                      : "bg-slate-50 text-slate-700 hover:bg-slate-100",
+                  ].join(" ")}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+
       {selectedTeam && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
             onClick={closeModal}
           />
-          <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/10 bg-[#07111f]/95 shadow-[0_25px_80px_rgba(0,0,0,0.6)]">
-            <div className="border-b border-white/10 bg-gradient-to-r from-fuchsia-500/20 via-violet-500/20 to-cyan-500/20 px-5 py-4">
+
+          <div className="relative w-full max-w-4xl overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.2)]">
+            <div className="border-b border-slate-200 bg-gradient-to-r from-fuchsia-50 via-white to-cyan-50 px-5 py-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-200">
+                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-700">
                     Team Profile
                   </p>
-                  <h3 className="mt-2 text-2xl font-black text-white sm:text-3xl">
+                  <h3 className="mt-2 text-2xl font-black text-slate-900 sm:text-3xl">
                     {selectedTeam}
                   </h3>
-                  <p className="mt-2 text-sm text-slate-200">
-                    Klik tim untuk melihat anggota yang terdaftar dan riwayat bracket.
+                  <p className="mt-2 text-sm text-slate-600">
+                    Anggota tim, waktu, wasit, dan riwayat match tampil di sini.
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="rounded-2xl border border-white/10 bg-white/10 p-2.5 text-white transition hover:bg-white/15"
+                  className="rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-700 transition hover:bg-slate-50"
                   aria-label="Close modal"
                 >
                   <X className="h-5 w-5" />
@@ -920,16 +808,16 @@ export default function BracketPage() {
             </div>
 
             <div className="grid gap-5 p-5 lg:grid-cols-[1fr_1.1fr]">
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-cyan-500/15 p-3">
-                    <UserRound className="h-5 w-5 text-cyan-300" />
+                  <div className="rounded-2xl bg-cyan-100 p-3">
+                    <UserRound className="h-5 w-5 text-cyan-700" />
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
                       Anggota Tim
                     </p>
-                    <h4 className="text-lg font-semibold text-white">Daftar peserta</h4>
+                    <h4 className="text-lg font-semibold text-slate-900">Roster</h4>
                   </div>
                 </div>
 
@@ -939,114 +827,145 @@ export default function BracketPage() {
                       {selectedMembers.map((member) => (
                         <span
                           key={member}
-                          className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1.5 text-sm text-cyan-100"
+                          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm"
                         >
                           {member}
                         </span>
                       ))}
                     </div>
                   ) : (
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-slate-300">
+                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600">
                       Belum ada anggota tim yang ditambahkan lewat{" "}
-                      <span className="font-semibold text-white">/addname</span>.
+                      <span className="font-semibold text-slate-900">/addname</span>.
                     </div>
                   )}
                 </div>
 
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl bg-white/5 px-4 py-3">
-                    <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                  <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                    <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
                       Status Tim
                     </span>
-                    <span className="mt-1 block font-semibold text-white">
+                    <span className="mt-1 block font-semibold text-slate-900">
                       {isPlaceholderTeam(selectedTeam) ? "Slot default" : "Tim aktif"}
                     </span>
                   </div>
-                  <div className="rounded-2xl bg-white/5 px-4 py-3">
-                    <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                  <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                    <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
                       Match Terkait
                     </span>
-                    <span className="mt-1 block font-semibold text-white">
+                    <span className="mt-1 block font-semibold text-slate-900">
                       {selectedHistory.length}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-2xl bg-fuchsia-500/15 p-3">
-                    <Shield className="h-5 w-5 text-fuchsia-300" />
+                  <div className="rounded-2xl bg-fuchsia-100 p-3">
+                    <Shield className="h-5 w-5 text-fuchsia-700" />
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                      Bracket History
+                      Match Detail
                     </p>
-                    <h4 className="text-lg font-semibold text-white">Riwayat pertandingan</h4>
+                    <h4 className="text-lg font-semibold text-slate-900">Waktu & Wasit</h4>
                   </div>
                 </div>
 
-                <div className="mt-4 max-h-[55vh] space-y-3 overflow-y-auto pr-1">
+                {selectedMatch && (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                          Match
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {roundLabel(selectedMatch.id)} · Match {selectedMatch.id}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                          Winner
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedMatch.winner || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                          Wasit
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedMatch.wasit || "-"}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.22em] text-slate-400">
+                          Time
+                        </p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {selectedMatch.time || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-4 max-h-[46vh] space-y-3 overflow-y-auto pr-1">
                   {selectedHistory.length > 0 ? (
                     selectedHistory.map((match) => (
                       <div
                         key={`${match.id}-${selectedTeam}`}
-                        className="rounded-2xl border border-white/10 bg-slate-950/75 p-4"
+                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                       >
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                              {match.id <= 8
-                                ? "Round of 16"
-                                : match.id <= 12
-                                  ? "Quarter Final"
-                                  : match.id <= 14
-                                    ? "Semi Final"
-                                    : match.id === 15
-                                      ? "Final"
-                                      : "Juara 3"}
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                              {roundLabel(match.id)}
                             </p>
-                            <p className="text-sm font-semibold text-white">
+                            <p className="text-sm font-semibold text-slate-900">
                               Match {match.id}
                             </p>
                           </div>
-                          <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-600">
                             {getMatchStatus(match)}
                           </span>
                         </div>
 
-                        <div className="grid gap-2 text-sm text-slate-200">
-                          <div className="rounded-xl bg-white/5 px-3 py-2">
+                        <div className="grid gap-2 text-sm text-slate-700">
+                          <div className="rounded-xl bg-slate-50 px-3 py-2">
                             {formatTeamLabel(match.teamA, data.participants)}
                           </div>
-                          <div className="text-center text-xs text-slate-500">vs</div>
-                          <div className="rounded-xl bg-white/5 px-3 py-2">
+                          <div className="text-center text-xs text-slate-400">vs</div>
+                          <div className="rounded-xl bg-slate-50 px-3 py-2">
                             {formatTeamLabel(match.teamB, data.participants)}
                           </div>
                         </div>
 
                         <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                          <div className="rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-200">
-                            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                          <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
                               Winner
                             </span>
-                            <span className="mt-1 block font-medium text-white">
+                            <span className="mt-1 block font-medium text-slate-900">
                               {match.winner || "-"}
                             </span>
                           </div>
-                          <div className="rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-200">
-                            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                          <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
                               Wasit
                             </span>
-                            <span className="mt-1 block font-medium text-white">
+                            <span className="mt-1 block font-medium text-slate-900">
                               {match.wasit || "-"}
                             </span>
                           </div>
-                          <div className="rounded-xl bg-white/5 px-3 py-2 text-sm text-slate-200 sm:col-span-2">
-                            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-500">
+                          <div className="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700 sm:col-span-2">
+                            <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">
                               Time
                             </span>
-                            <span className="mt-1 block font-medium text-white">
+                            <span className="mt-1 block font-medium text-slate-900">
                               {match.time || "-"}
                             </span>
                           </div>
@@ -1054,7 +973,7 @@ export default function BracketPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-slate-300">
+                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-600 shadow-sm">
                       Tidak ada riwayat match yang ditemukan untuk tim ini.
                     </div>
                   )}
