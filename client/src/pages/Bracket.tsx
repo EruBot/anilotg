@@ -11,15 +11,34 @@ export default function BracketPage() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 FETCH DARI API (INI YANG KAMU TANYA)
   useEffect(() => {
-    fetch("https://a18791-0ea9.c.jrnm.app/api/bracket")
-      .then((res) => res.json())
-      .then((data) => {
-        setMatches(data.matches);
+    const fetchData = async () => {
+      try {
+        const res = await fetch("https://a18791-0ea9.c.jrnm.app/api/bracket");
+
+        if (!res.ok) {
+          throw new Error("API error");
+        }
+
+        const data = await res.json();
+        console.log("API:", data);
+
+        if (Array.isArray(data)) {
+          setMatches(data);
+        } else if (data && Array.isArray(data.matches)) {
+          setMatches(data.matches);
+        } else {
+          setMatches([]);
+        }
+      } catch (err) {
+        console.error("FETCH ERROR:", err);
+        setMatches([]);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -41,9 +60,16 @@ export default function BracketPage() {
           <p className="text-center text-slate-500">Loading...</p>
         )}
 
+        {/* EMPTY */}
+        {!loading && matches.length === 0 && (
+          <p className="text-center text-slate-500">
+            Tidak ada data bracket
+          </p>
+        )}
+
         {/* MATCH LIST */}
         <div className="space-y-4">
-          {matches.map((match) => (
+          {matches?.map((match) => (
             <div
               key={match.id}
               className="p-5 rounded-2xl bg-white/80 backdrop-blur border border-purple-100 shadow-sm"
@@ -67,6 +93,7 @@ export default function BracketPage() {
             </div>
           ))}
         </div>
+
       </div>
     </div>
   );
