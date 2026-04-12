@@ -25,6 +25,7 @@ function App() {
             {/* <Route path="/about" element={<About />} /> */}
             {/* <Route path="/members" element={<Members />} /> */}
             <Route path="/event" element={<Event />} />
+            <Route path="/bracket" element={<Bracket />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
