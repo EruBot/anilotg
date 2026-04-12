@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronRight,
   Clock3,
   Crown,
   Medal,
@@ -11,6 +10,7 @@ import {
   UserRound,
   Users,
   X,
+  ChevronRight,
 } from "lucide-react";
 
 type Match = {
@@ -45,9 +45,25 @@ type APIData =
     }
   | unknown[];
 
+type ViewKey = "round16" | "quarter" | "semi" | "final";
+
 const API_URL =
   ((import.meta as any)?.env?.VITE_BRACKET_API_URL as string | undefined) ||
   "https://a18791-0ea9.c.jrnm.app/api/bracket";
+
+const VIEW_HASH: Record<ViewKey, string> = {
+  round16: "#16besar",
+  quarter: "#8besar",
+  semi: "#semifinal",
+  final: "#final",
+};
+
+const HASH_VIEW: Record<string, ViewKey> = {
+  "#16besar": "round16",
+  "#8besar": "quarter",
+  "#semifinal": "semi",
+  "#final": "final",
+};
 
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
@@ -65,11 +81,7 @@ const isPlaceholderTeam = (team: string) => {
 const parseParticipantNames = (value: unknown): string[] => {
   if (Array.isArray(value)) {
     return Array.from(
-      new Set(
-        value
-          .map((item) => cleanText(item))
-          .filter(Boolean)
-      )
+      new Set(value.map((item) => cleanText(item)).filter(Boolean))
     );
   }
 
@@ -126,16 +138,19 @@ const buildMatch = (
   };
 };
 
+const loserOf = (match?: Match) => {
+  if (!match || !isText(match.winner)) return "TBD";
+  if (match.winner === match.teamA) return cleanText(match.teamB) || "TBD";
+  if (match.winner === match.teamB) return cleanText(match.teamA) || "TBD";
+  return "TBD";
+};
+
 const createDefaultState = (): BracketState => ({
   round1: Array.from({ length: 8 }, (_, i) =>
     buildMatch(i + 1, `Slot ${i * 2 + 1}`, `Slot ${i * 2 + 2}`)
   ),
-  quarter: Array.from({ length: 4 }, (_, i) =>
-    buildMatch(9 + i, "TBD", "TBD")
-  ),
-  semi: Array.from({ length: 2 }, (_, i) =>
-    buildMatch(13 + i, "TBD", "TBD")
-  ),
+  quarter: Array.from({ length: 4 }, (_, i) => buildMatch(9 + i, "TBD", "TBD")),
+  semi: Array.from({ length: 2 }, (_, i) => buildMatch(13 + i, "TBD", "TBD")),
   final: [buildMatch(15, "TBD", "TBD")],
   third: [buildMatch(16, "TBD", "TBD")],
   participants: {},
@@ -171,6 +186,7 @@ const normalizeBracket = (raw: APIData): BracketState => {
     const src = isPlainObject(quarterSource[i]) ? quarterSource[i] : {};
     const fallbackA = round1[i * 2]?.winner || "TBD";
     const fallbackB = round1[i * 2 + 1]?.winner || "TBD";
+
     return buildMatch(
       9 + i,
       isText(src.teamA) ? src.teamA : fallbackA,
@@ -183,6 +199,7 @@ const normalizeBracket = (raw: APIData): BracketState => {
     const src = isPlainObject(semiSource[i]) ? semiSource[i] : {};
     const fallbackA = quarter[i * 2]?.winner || "TBD";
     const fallbackB = quarter[i * 2 + 1]?.winner || "TBD";
+
     return buildMatch(
       13 + i,
       isText(src.teamA) ? src.teamA : fallbackA,
@@ -205,18 +222,10 @@ const normalizeBracket = (raw: APIData): BracketState => {
       16,
       isText(thirdSource[0]?.teamA)
         ? thirdSource[0].teamA
-        : semi[0]?.winner && semi[0]?.winner !== "TBD"
-          ? semi[0].winner === semi[0].teamA
-            ? semi[0].teamB
-            : semi[0].teamA
-          : "TBD",
+        : loserOf(semi[0]),
       isText(thirdSource[0]?.teamB)
         ? thirdSource[0].teamB
-        : semi[1]?.winner && semi[1]?.winner !== "TBD"
-          ? semi[1].winner === semi[1].teamA
-            ? semi[1].teamB
-            : semi[1].teamA
-          : "TBD",
+        : loserOf(semi[1]),
       thirdSource[0]
     ),
   ];
@@ -243,15 +252,6 @@ const formatTeamLabel = (team: string, participants: ParticipantsMap) => {
   return clean;
 };
 
-const getRoundLabel = (id: number) => {
-  if (id >= 1 && id <= 8) return "Round of 16";
-  if (id >= 9 && id <= 12) return "Quarter Final";
-  if (id >= 13 && id <= 14) return "Semi Final";
-  if (id === 15) return "Final";
-  if (id === 16) return "Juara 3";
-  return "Bracket";
-};
-
 const getMatchStatus = (match: Match) => {
   if (match.winner) return "Completed";
   if (match.time) return "Scheduled";
@@ -265,9 +265,30 @@ export default function BracketPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [view, setView] = useState<ViewKey>("round16");
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
 
   const requestSeq = useRef(0);
+
+  const allMatches = useMemo(
+    () => [...data.round1, ...data.quarter, ...data.semi, ...data.final, ...data.third],
+    [data]
+  );
+
+  const viewMatches = useMemo(() => {
+    switch (view) {
+      case "round16":
+        return data.round1;
+      case "quarter":
+        return data.quarter;
+      case "semi":
+        return data.semi;
+      case "final":
+        return data.final;
+      default:
+        return data.round1;
+    }
+  }, [view, data]);
 
   useEffect(() => {
     if (!selectedTeam) return;
@@ -277,6 +298,24 @@ export default function BracketPage() {
       document.body.style.overflow = previous;
     };
   }, [selectedTeam]);
+
+  useEffect(() => {
+    const initial = HASH_VIEW[window.location.hash] || "round16";
+    setView(initial);
+
+    if (!window.location.hash) {
+      window.history.replaceState(null, "", VIEW_HASH.round16);
+    }
+
+    const onHashChange = () => {
+      const next = HASH_VIEW[window.location.hash] || "round16";
+      setView(next);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -309,6 +348,7 @@ export default function BracketPage() {
         if (!active) return;
         if (err instanceof DOMException && err.name === "AbortError") return;
 
+        setData(createDefaultState());
         setError("Live sync unavailable. Showing fallback bracket scaffold.");
       } finally {
         if (active) setLoading(false);
@@ -324,11 +364,6 @@ export default function BracketPage() {
       clearInterval(interval);
     };
   }, []);
-
-  const allMatches = useMemo(
-    () => [...data.round1, ...data.quarter, ...data.semi, ...data.final, ...data.third],
-    [data]
-  );
 
   const stats = useMemo(() => {
     const uniqueTeams = new Set<string>();
@@ -347,7 +382,6 @@ export default function BracketPage() {
       winners,
       scheduled,
       registeredTeams: Object.keys(data.participants).length,
-      totalMatches: allMatches.length,
     };
   }, [allMatches, data.participants]);
 
@@ -362,6 +396,15 @@ export default function BracketPage() {
       (m) => m.teamA === selectedTeam || m.teamB === selectedTeam || m.winner === selectedTeam
     );
   }, [selectedTeam, allMatches]);
+
+  const setRoute = (next: ViewKey) => {
+    const hash = VIEW_HASH[next];
+    if (window.location.hash !== hash) {
+      window.history.pushState(null, "", hash);
+    }
+    setView(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const openTeam = (team: string, match: Match) => {
     setSelectedTeam(team);
@@ -456,7 +499,15 @@ export default function BracketPage() {
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-slate-400">
-              {getRoundLabel(match.id)}
+              {match.id <= 8
+                ? "Round of 16"
+                : match.id <= 12
+                  ? "Quarter Final"
+                  : match.id <= 14
+                    ? "Semi Final"
+                    : match.id === 15
+                      ? "Final"
+                      : "Juara 3"}
             </p>
             <h3 className="mt-1 text-sm font-semibold text-white">
               Match {match.id}
@@ -513,23 +564,16 @@ export default function BracketPage() {
     subtitle,
     icon: Icon,
     items,
-    wide = false,
     gradient,
   }: {
     title: string;
     subtitle: string;
     icon: React.ComponentType<{ className?: string }>;
     items: Match[];
-    wide?: boolean;
     gradient: string;
   }) => {
     return (
-      <section
-        className={[
-          "overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl",
-          wide ? "xl:col-span-2" : "",
-        ].join(" ")}
-      >
+      <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
         <div className={`border-b border-white/10 bg-gradient-to-r ${gradient} px-5 py-4`}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -548,7 +592,7 @@ export default function BracketPage() {
           </div>
         </div>
 
-        <div className="max-h-[920px] space-y-3 overflow-auto p-4">
+        <div className="space-y-3 p-4">
           {items.map((match) => (
             <MatchCard key={match.id} match={match} />
           ))}
@@ -557,18 +601,63 @@ export default function BracketPage() {
     );
   };
 
-  const topCommands = [
-    "/add",
-    "/win",
-    "/time",
-    "/addname",
-    "/swap",
-    "/resetall",
-    "/resettim",
-    "/resetwasit",
-    "/resettime",
-    "/reset",
-  ];
+  const ViewContent = () => {
+    if (view === "round16") {
+      return (
+        <SectionBlock
+          title="16 Besar"
+          subtitle="8 match awal yang dikelola bot Telegram"
+          icon={Shield}
+          items={viewMatches}
+          gradient="from-fuchsia-500/20 via-violet-500/20 to-cyan-500/20"
+        />
+      );
+    }
+
+    if (view === "quarter") {
+      return (
+        <SectionBlock
+          title="8 Besar"
+          subtitle="Babak quarter final"
+          icon={Trophy}
+          items={viewMatches}
+          gradient="from-cyan-500/20 via-sky-500/20 to-indigo-500/20"
+        />
+      );
+    }
+
+    if (view === "semi") {
+      return (
+        <SectionBlock
+          title="Semi Final"
+          subtitle="Babak empat besar"
+          icon={Medal}
+          items={viewMatches}
+          gradient="from-violet-500/20 via-fuchsia-500/20 to-rose-500/20"
+        />
+      );
+    }
+
+    return (
+      <div className="space-y-5">
+        <SectionBlock
+          title="Final"
+          subtitle="Penentuan juara 1 & 2"
+          icon={Crown}
+          items={data.final}
+          gradient="from-amber-500/20 via-orange-500/20 to-rose-500/20"
+        />
+
+        <SectionBlock
+          title="Juara 3"
+          subtitle="Perebutan podium"
+          icon={Trophy}
+          items={data.third}
+          gradient="from-emerald-500/20 via-teal-500/20 to-cyan-500/20"
+        />
+      </div>
+    );
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
@@ -579,47 +668,89 @@ export default function BracketPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_28%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_26%)]" />
       </div>
 
-      <main className="relative mx-auto max-w-7xl px-4 py-6 lg:px-6 lg:py-10">
-        <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl lg:p-8">
+      <main className="relative mx-auto max-w-7xl px-4 py-5 lg:px-6 lg:py-8">
+        <header className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-5 shadow-2xl backdrop-blur-xl lg:p-7">
           <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(236,72,153,0.08),rgba(139,92,246,0.08),rgba(34,211,238,0.08))]" />
-          <div className="relative grid gap-6 xl:grid-cols-[1.6fr_1fr] xl:items-end">
+          <div className="relative grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-end">
             <div>
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200">
                 <Sparkles className="h-4 w-4" />
-                ANILO · Tournament Control Center
+                ANILO · Bracket Navigator
               </div>
 
               <h1 className="max-w-3xl text-3xl font-black tracking-tight text-white sm:text-4xl lg:text-5xl">
-                Bracket tournament modern, kompatibel penuh dengan bot Telegram.
+                Bracket lebih mudah dibaca, lebih cepat, dan tetap kompatibel penuh dengan bot Telegram.
               </h1>
 
               <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300 sm:text-base">
-                Semua ronde ditarik langsung dari API bot: Round of 16, Quarter Final, Semi Final,
-                Final, dan Juara 3. Klik tim mana pun untuk melihat anggota tim yang terdaftar.
+                Tampilan dibagi ke 4 bagian terpisah lewat hash URL supaya lebih ringan di mobile,
+                lebih fokus, dan lebih mudah dipahami saat turnamen berjalan.
               </p>
 
-              <div className="mt-6 flex flex-wrap gap-2">
-                {topCommands.map((cmd) => (
-                  <span
-                    key={cmd}
-                    className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-200 backdrop-blur-md"
-                  >
-                    {cmd}
-                  </span>
-                ))}
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <button
+                  type="button"
+                  onClick={() => setRoute("round16")}
+                  className={[
+                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
+                    view === "round16"
+                      ? "border-fuchsia-400/40 bg-gradient-to-br from-fuchsia-500/20 to-violet-500/20"
+                      : "border-white/10 bg-white/5 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 1</span>
+                  <span className="mt-1 block text-sm font-semibold text-white">16 Besar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoute("quarter")}
+                  className={[
+                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
+                    view === "quarter"
+                      ? "border-cyan-400/40 bg-gradient-to-br from-cyan-500/20 to-sky-500/20"
+                      : "border-white/10 bg-white/5 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 2</span>
+                  <span className="mt-1 block text-sm font-semibold text-white">8 Besar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoute("semi")}
+                  className={[
+                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
+                    view === "semi"
+                      ? "border-violet-400/40 bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20"
+                      : "border-white/10 bg-white/5 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 3</span>
+                  <span className="mt-1 block text-sm font-semibold text-white">Semi Final</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoute("final")}
+                  className={[
+                    "rounded-2xl border px-4 py-3 text-left transition-all duration-300",
+                    view === "final"
+                      ? "border-amber-400/40 bg-gradient-to-br from-amber-500/20 to-orange-500/20"
+                      : "border-white/10 bg-white/5 hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  <span className="block text-[10px] uppercase tracking-[0.22em] text-slate-400">Bagian 4</span>
+                  <span className="mt-1 block text-sm font-semibold text-white">Final</span>
+                </button>
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/70 p-4 shadow-lg backdrop-blur-xl">
                 <div className="flex items-center gap-3">
                   <div className="rounded-2xl bg-fuchsia-500/15 p-2.5">
                     <RefreshCw className="h-5 w-5 text-fuchsia-300" />
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                      Live Sync
-                    </p>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Live Sync</p>
                     <p className="text-sm font-semibold text-white">
                       {loading ? "Syncing bracket..." : error ? "Fallback mode" : "Online"}
                     </p>
@@ -628,9 +759,7 @@ export default function BracketPage() {
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-300">
                   <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                      Last sync
-                    </span>
+                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Last sync</span>
                     <span className="mt-1 block font-medium text-white">
                       {lastSyncAt
                         ? lastSyncAt.toLocaleTimeString("id-ID", {
@@ -642,12 +771,8 @@ export default function BracketPage() {
                     </span>
                   </div>
                   <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                      Teams
-                    </span>
-                    <span className="mt-1 block font-medium text-white">
-                      {stats.activeTeams}
-                    </span>
+                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Teams</span>
+                    <span className="mt-1 block font-medium text-white">{stats.activeTeams}</span>
                   </div>
                 </div>
               </div>
@@ -658,31 +783,21 @@ export default function BracketPage() {
                     <Shield className="h-5 w-5 text-cyan-300" />
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">
-                      Bot Compatibility
-                    </p>
+                    <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Bot Ready</p>
                     <p className="text-sm font-semibold text-white">
-                      /add, /win, /time, /addname, /swap
+                      /add /win /time /addname /swap
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-xs text-slate-300">
                   <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                      Registered
-                    </span>
-                    <span className="mt-1 block font-medium text-white">
-                      {stats.registeredTeams}
-                    </span>
+                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Winners</span>
+                    <span className="mt-1 block font-medium text-white">{stats.winners}</span>
                   </div>
                   <div className="rounded-2xl bg-white/5 p-3">
-                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                      Winners
-                    </span>
-                    <span className="mt-1 block font-medium text-white">
-                      {stats.winners}
-                    </span>
+                    <span className="block text-[10px] uppercase tracking-[0.18em] text-slate-500">Schedules</span>
+                    <span className="mt-1 block font-medium text-white">{stats.scheduled}</span>
                   </div>
                 </div>
               </div>
@@ -690,7 +805,7 @@ export default function BracketPage() {
           </div>
 
           {error && (
-            <div className="relative mt-6 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            <div className="relative mt-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
               {error}
             </div>
           )}
@@ -750,56 +865,25 @@ export default function BracketPage() {
           <div className="mb-4 flex items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
-                Live Bracket
+                Bracket Section
               </p>
               <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
-                Full tournament board
+                {view === "round16"
+                  ? "16 Besar"
+                  : view === "quarter"
+                    ? "8 Besar"
+                    : view === "semi"
+                      ? "Semi Final"
+                      : "Final"}
               </h2>
             </div>
             <div className="hidden items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-200 backdrop-blur-md lg:flex">
-              <RefreshCw className="h-4 w-4 text-cyan-300" />
-              Auto refresh every 8s
+              <ChevronRight className="h-4 w-4 text-cyan-300" />
+              Tap a team to open roster
             </div>
           </div>
 
-          <div className="grid gap-5 xl:grid-cols-5">
-            <SectionBlock
-              title="Round of 16"
-              subtitle="8 match awal dari bot Telegram"
-              icon={Shield}
-              items={data.round1}
-              wide
-              gradient="from-fuchsia-500/20 via-violet-500/20 to-cyan-500/20"
-            />
-            <SectionBlock
-              title="Quarter Final"
-              subtitle="8 besar"
-              icon={Trophy}
-              items={data.quarter}
-              gradient="from-cyan-500/20 via-sky-500/20 to-indigo-500/20"
-            />
-            <SectionBlock
-              title="Semi Final"
-              subtitle="4 besar"
-              icon={Medal}
-              items={data.semi}
-              gradient="from-violet-500/20 via-fuchsia-500/20 to-rose-500/20"
-            />
-            <SectionBlock
-              title="Final"
-              subtitle="Penentuan juara 1 & 2"
-              icon={Crown}
-              items={data.final}
-              gradient="from-amber-500/20 via-orange-500/20 to-rose-500/20"
-            />
-            <SectionBlock
-              title="Juara 3"
-              subtitle="Pemenang perebutan podium"
-              icon={Trophy}
-              items={data.third}
-              gradient="from-emerald-500/20 via-teal-500/20 to-cyan-500/20"
-            />
-          </div>
+          <ViewContent />
         </section>
       </main>
 
@@ -863,7 +947,8 @@ export default function BracketPage() {
                     </div>
                   ) : (
                     <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-sm text-slate-300">
-                      Belum ada anggota tim yang ditambahkan lewat <span className="font-semibold text-white">/addname</span>.
+                      Belum ada anggota tim yang ditambahkan lewat{" "}
+                      <span className="font-semibold text-white">/addname</span>.
                     </div>
                   )}
                 </div>
@@ -911,7 +996,15 @@ export default function BracketPage() {
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                              {getRoundLabel(match.id)}
+                              {match.id <= 8
+                                ? "Round of 16"
+                                : match.id <= 12
+                                  ? "Quarter Final"
+                                  : match.id <= 14
+                                    ? "Semi Final"
+                                    : match.id === 15
+                                      ? "Final"
+                                      : "Juara 3"}
                             </p>
                             <p className="text-sm font-semibold text-white">
                               Match {match.id}
