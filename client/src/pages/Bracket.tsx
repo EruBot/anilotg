@@ -11,10 +11,6 @@ type Match = {
 
 type APIData =
   | {
-      round1?: unknown;
-      quarter?: unknown;
-      semi?: unknown;
-      final?: unknown;
       matches?: unknown;
     }
   | unknown[];
@@ -30,24 +26,13 @@ const sanitizeMatch = (m: any, index: number): Match => {
   };
 };
 
-const normalizeArray = (arr: unknown): Match[] => {
+const normalize = (arr: unknown): Match[] => {
   if (!Array.isArray(arr)) return [];
   return arr.map((m, i) => sanitizeMatch(m, i));
 };
 
 export default function BracketPage() {
-  const [data, setData] = useState<{
-    round1: Match[];
-    quarter: Match[];
-    semi: Match[];
-    final: Match[];
-  }>({
-    round1: [],
-    quarter: [],
-    semi: [],
-    final: [],
-  });
-
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
 
   const requestIdRef = useRef(0);
@@ -57,7 +42,7 @@ export default function BracketPage() {
     let controller: AbortController | null = null;
 
     const fetchData = async () => {
-      const requestId = ++requestIdRef.current;
+      const reqId = ++requestIdRef.current;
 
       if (controller) controller.abort();
       controller = new AbortController();
@@ -72,36 +57,26 @@ export default function BracketPage() {
 
         const json: APIData = await res.json();
 
-        if (!active || requestId !== requestIdRef.current) return;
+        if (!active || reqId !== requestIdRef.current) return;
 
-        let round1: Match[] = [];
-        let quarter: Match[] = [];
-        let semi: Match[] = [];
-        let final: Match[] = [];
+        let data: Match[] = [];
 
+        // SUPPORT ARRAY
         if (Array.isArray(json)) {
-          round1 = normalizeArray(json);
-        } else if (json && typeof json === "object") {
-          round1 = normalizeArray(json.round1);
-          quarter = normalizeArray(json.quarter);
-          semi = normalizeArray(json.semi);
-          final = normalizeArray(json.final);
+          data = normalize(json);
+        }
 
-          if (!round1.length) {
-            round1 = normalizeArray(json.matches);
+        // SUPPORT OBJECT {matches}
+        else if (json && typeof json === "object") {
+          if (Array.isArray(json.matches)) {
+            data = normalize(json.matches);
           }
         }
 
-        setData({ round1, quarter, semi, final });
+        setMatches(data);
       } catch {
         if (!active) return;
-
-        setData({
-          round1: [],
-          quarter: [],
-          semi: [],
-          final: [],
-        });
+        setMatches([]);
       } finally {
         if (active) setLoading(false);
       }
@@ -122,24 +97,26 @@ export default function BracketPage() {
     const isBWin = m.winner === m.teamB;
 
     return (
-      <div className="p-4 w-56 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-        <div className="text-xs text-slate-400 mb-2">Match {m.id}</div>
+      <div className="relative p-4 rounded-xl bg-white/5 backdrop-blur border border-white/10 shadow-lg hover:scale-[1.02] transition">
+        <div className="text-xs text-slate-400 mb-2">
+          Match {m.id}
+        </div>
 
         <div className="space-y-1">
-          <div className={`flex justify-between ${isAWin ? "font-semibold text-purple-600" : ""}`}>
+          <div className={`flex justify-between ${isAWin ? "text-purple-400 font-semibold" : "text-slate-200"}`}>
             <span>{m.teamA}</span>
-            {isAWin && <span className="text-xs bg-purple-100 px-2 rounded">WIN</span>}
+            {isAWin && <span className="text-[10px] bg-purple-500/20 px-2 rounded">WIN</span>}
           </div>
 
-          <div className="text-center text-xs text-slate-400">vs</div>
+          <div className="text-center text-xs text-slate-500">vs</div>
 
-          <div className={`flex justify-between ${isBWin ? "font-semibold text-purple-600" : ""}`}>
+          <div className={`flex justify-between ${isBWin ? "text-purple-400 font-semibold" : "text-slate-200"}`}>
             <span>{m.teamB}</span>
-            {isBWin && <span className="text-xs bg-purple-100 px-2 rounded">WIN</span>}
+            {isBWin && <span className="text-[10px] bg-purple-500/20 px-2 rounded">WIN</span>}
           </div>
         </div>
 
-        <div className="mt-3 text-xs text-slate-500 space-y-1">
+        <div className="mt-3 text-xs text-slate-400 space-y-1">
           <div>Winner: {m.winner || "-"}</div>
           <div>Wasit: {m.wasit || "-"}</div>
           <div>Time: {m.time || "-"}</div>
@@ -148,55 +125,42 @@ export default function BracketPage() {
     );
   };
 
-  const Section = ({ title, items }: { title: string; items: Match[] }) => (
-    <div className="flex flex-col gap-6 min-w-[220px]">
-      <div className="text-sm font-semibold text-slate-700 text-center">
-        {title}
-      </div>
-      {items.length ? items.map(renderMatch) : (
-        <div className="text-xs text-slate-400 text-center">No data</div>
-      )}
-    </div>
-  );
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500">
-        Loading bracket...
+      <div className="min-h-screen flex items-center justify-center text-slate-400 bg-[#0f172a]">
+        Loading tournament...
       </div>
     );
   }
 
-  const empty =
-    !data.round1.length &&
-    !data.quarter.length &&
-    !data.semi.length &&
-    !data.final.length;
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#0f172a] text-white">
 
-        <div className="mb-6">
-          <h1 className="text-xl font-semibold text-slate-800">
+      {/* BACKGROUND EFFECT */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-purple-900/40 via-slate-900 to-black" />
+
+      <div className="max-w-7xl mx-auto p-6">
+
+        {/* HEADER */}
+        <div className="mb-10 text-center">
+          <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
             Tournament Bracket
           </h1>
-          <p className="text-sm text-slate-500">
-            Real-time update dari sistem pertandingan
+          <p className="text-slate-400 text-sm mt-2">
+            Real-time update dari sistem pertandingan ANILO
           </p>
         </div>
 
-        {empty && (
-          <div className="text-center text-slate-400 py-10">
-            Data bracket belum tersedia
+        {/* EMPTY */}
+        {matches.length === 0 && (
+          <div className="text-center text-slate-500 py-20">
+            Data belum tersedia
           </div>
         )}
 
-        <div className="flex gap-10 overflow-x-auto pb-4">
-          <Section title="Round 16" items={data.round1} />
-          <Section title="Quarter Final" items={data.quarter} />
-          <Section title="Semi Final" items={data.semi} />
-          <Section title="Final" items={data.final} />
+        {/* GRID */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {matches.map(renderMatch)}
         </div>
 
       </div>
