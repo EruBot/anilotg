@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  Crown,
-  Medal,
-  RefreshCw,
-  Trophy,
-  Flame,
-  MessageSquare,
-} from "lucide-react";
+import { Crown, Medal, Trophy } from "lucide-react";
 
 type Type = "cp" | "chat";
 type Period = "harian" | "mingguan" | "lifetime";
@@ -42,24 +35,33 @@ export default function MiniApp() {
 
   const [loading, setLoading] = useState(true);
 
-  // INIT TELEGRAM
+  // 🔥 INIT (Telegram + fallback URL)
   useEffect(() => {
-    if (!tg) return;
+    if (tg) {
+      tg.ready();
+      tg.expand();
 
-    tg.ready();
-    tg.expand();
+      const start = tg.initDataUnsafe?.start_param;
 
-    const start = tg.initDataUnsafe?.start_param;
+      if (start) {
+        const p = new URLSearchParams(start);
+        setChatId(p.get("chat_id"));
+        if (p.get("type")) setType(p.get("type") as Type);
+        if (p.get("period")) setPeriod(p.get("period") as Period);
+        return;
+      }
+    }
 
-    if (start) {
-      const p = new URLSearchParams(start);
-      setChatId(p.get("chat_id"));
-      if (p.get("type")) setType(p.get("type") as Type);
-      if (p.get("period")) setPeriod(p.get("period") as Period);
+    // 🔥 FALLBACK (browser test)
+    const params = new URLSearchParams(window.location.search);
+    const urlChatId = params.get("chat_id");
+
+    if (urlChatId) {
+      setChatId(urlChatId);
     }
   }, [tg]);
 
-  // FETCH API
+  // 🔥 FETCH API (FIXED)
   useEffect(() => {
     if (!chatId) return;
 
@@ -69,21 +71,33 @@ export default function MiniApp() {
       setLoading(true);
 
       try {
-        const res = await fetch(`https://anilocp.vercel.app/api/miniapp/leaderboard?chat_id=${chatId}&type=${type}&period=${period}`, {
-  headers: {
-    "X-Telegram-Init-Data": tg?.initData || "",
-  },
-});
+        const res = await fetch(
+          `https://anilocp.vercel.app/api/miniapp/leaderboard?chat_id=${chatId}&type=${type}&period=${period}`,
+          {
+            headers: {
+              "X-Telegram-Init-Data": tg?.initData || "",
+            },
+          }
+        );
 
         const json = await res.json();
 
         if (!active) return;
 
+        // 🔥 FIX WAJIB
+        if (!json.ok) {
+          console.error("API ERROR:", json.error);
+          setRows([]);
+          setTop([]);
+          setMe(null);
+          return;
+        }
+
         setRows(json.rows || []);
         setTop(json.top_three || []);
         setMe(json.me || null);
       } catch (e) {
-        console.error(e);
+        console.error("FETCH ERROR:", e);
       } finally {
         if (!active) return;
         setLoading(false);
@@ -96,6 +110,15 @@ export default function MiniApp() {
       active = false;
     };
   }, [chatId, type, period, tg]);
+
+  // 🔥 GUARD (biar ga blank)
+  if (!chatId) {
+    return (
+      <div className="text-white p-4">
+        Waiting for chat context...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#020617] text-white p-4">
@@ -126,7 +149,7 @@ export default function MiniApp() {
 
         {/* TOP 3 */}
         <div className="grid grid-cols-3 gap-2">
-          {top.map((u, i) => (
+          {(top || []).map((u, i) => (
             <div key={u.user_id} className="bg-white/5 p-3 rounded-xl text-center">
               <img src={avatar(u.avatar_seed)} className="w-12 mx-auto" />
 
@@ -144,7 +167,7 @@ export default function MiniApp() {
 
         {/* LIST */}
         <div className="space-y-2">
-          {rows.map((u) => (
+          {(rows || []).map((u) => (
             <div
               key={u.user_id}
               className="flex items-center gap-3 bg-white/5 p-3 rounded-xl"
