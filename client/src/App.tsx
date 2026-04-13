@@ -12,6 +12,8 @@ import NotFound from "@/pages/NotFound";
 // import Members from "./pages/Members";
 import Event from  "./pages/Event";
 import Bracket from  "./pages/Bracket";
+import Miniapp from  "./pages/miniapp/Miniapp";
+
 
 
 function App() {
@@ -28,6 +30,7 @@ function App() {
             {/* <Route path="/members" element={<Members />} /> */}
             <Route path="/event" element={<Event />} />
             <Route path="/bracket" element={<Bracket />} />
+            <Route path="/miniapp" element={<Miniapp />} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
