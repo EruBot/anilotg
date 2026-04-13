@@ -37,20 +37,33 @@ export default function MiniApp() {
 
   // 🔥 INIT (Telegram + fallback URL)
   useEffect(() => {
-    if (tg) {
-      tg.ready();
-      tg.expand();
+  if (tg) {
+    tg.ready();
+    tg.expand();
 
-      const start = tg.initDataUnsafe?.start_param;
+    // 1. coba dari start_param
+    const start = tg.initDataUnsafe?.start_param;
 
-      if (start) {
-        const p = new URLSearchParams(start);
-        setChatId(p.get("chat_id"));
-        if (p.get("type")) setType(p.get("type") as Type);
-        if (p.get("period")) setPeriod(p.get("period") as Period);
+    if (start) {
+      const p = new URLSearchParams(start);
+      const cid = p.get("chat_id");
+
+      if (cid) {
+        setChatId(cid);
         return;
       }
     }
+  }
+
+  // 2. fallback URL (WAJIB untuk debug & kasus Telegram bug)
+  const params = new URLSearchParams(window.location.search);
+  const urlChatId = params.get("chat_id");
+
+  if (urlChatId) {
+    setChatId(urlChatId);
+  }
+
+}, [tg]);
 
     // 🔥 FALLBACK (browser test)
     const params = new URLSearchParams(window.location.search);
