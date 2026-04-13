@@ -12,7 +12,7 @@ import NotFound from "@/pages/NotFound";
 // import Members from "./pages/Members";
 import Event from  "./pages/Event";
 import Bracket from  "./pages/Bracket";
-import Miniapp from  "./pages/miniapp/Miniapp";
+import Miniapp from  "./pages/miniapp/MiniApp";
 
 
 
