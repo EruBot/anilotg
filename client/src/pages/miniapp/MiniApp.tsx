@@ -69,14 +69,11 @@ export default function MiniApp() {
       setLoading(true);
 
       try {
-        const res = await fetch(
-          `/api/miniapp/leaderboard?chat_id=${chatId}&type=${type}&period=${period}`,
-          {
-            headers: {
-              "X-Telegram-Init-Data": tg?.initData || "",
-            },
-          }
-        );
+        const res = await fetch(`https://anilocp.vercel.app/api/miniapp/leaderboard?chat_id=${chatId}&type=${type}&period=${period}`, {
+  headers: {
+    "X-Telegram-Init-Data": tg?.initData || "",
+  },
+});
 
         const json = await res.json();
 
