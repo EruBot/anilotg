@@ -19,7 +19,9 @@ function getTG() {
 }
 
 function avatar(seed: string) {
-  return `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(seed)}`;
+  return `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(
+    seed
+  )}`;
 }
 
 export default function MiniApp() {
@@ -35,45 +37,39 @@ export default function MiniApp() {
 
   const [loading, setLoading] = useState(true);
 
-  // 🔥 INIT (Telegram + fallback URL)
+  // ✅ INIT (FIX TOTAL - NO SYNTAX ERROR)
   useEffect(() => {
-  if (tg) {
-    tg.ready();
-    tg.expand();
+    try {
+      if (tg) {
+        tg.ready();
+        tg.expand();
 
-    const start = tg.initDataUnsafe?.start_param;
+        const start = tg.initDataUnsafe?.start_param;
 
-    if (start) {
-      const p = new URLSearchParams(start);
-      const cid = p.get("chat_id");
+        if (start) {
+          const p = new URLSearchParams(start);
+          const cid = p.get("chat_id");
 
-      if (cid) {
-        setChatId(cid);
-        return;
+          if (cid) {
+            setChatId(cid);
+            return;
+          }
+        }
       }
-    }
-  }
 
-  // fallback URL (WAJIB)
-  const params = new URLSearchParams(window.location.search);
-  const urlChatId = params.get("chat_id");
+      // fallback URL
+      const params = new URLSearchParams(window.location.search);
+      const urlChatId = params.get("chat_id");
 
-  if (urlChatId) {
-    setChatId(urlChatId);
-  }
-}, [tg]);
-  
-
-    // 🔥 FALLBACK (browser test)
-    const params = new URLSearchParams(window.location.search);
-    const urlChatId = params.get("chat_id");
-
-    if (urlChatId) {
-      setChatId(urlChatId);
+      if (urlChatId) {
+        setChatId(urlChatId);
+      }
+    } catch (e) {
+      console.error("INIT ERROR:", e);
     }
   }, [tg]);
 
-  // 🔥 FETCH API (FIXED)
+  // ✅ FETCH
   useEffect(() => {
     if (!chatId) return;
 
@@ -96,7 +92,6 @@ export default function MiniApp() {
 
         if (!active) return;
 
-        // 🔥 FIX WAJIB
         if (!json.ok) {
           console.error("API ERROR:", json.error);
           setRows([]);
@@ -123,7 +118,6 @@ export default function MiniApp() {
     };
   }, [chatId, type, period, tg]);
 
-  // 🔥 GUARD (biar ga blank)
   if (!chatId) {
     return (
       <div className="text-white p-4">
@@ -136,7 +130,6 @@ export default function MiniApp() {
     <div className="min-h-screen bg-[#020617] text-white p-4">
       <div className="max-w-4xl mx-auto space-y-4">
 
-        {/* HEADER */}
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-semibold">
             Leaderboard {type.toUpperCase()}
@@ -150,23 +143,18 @@ export default function MiniApp() {
           </button>
         </div>
 
-        {/* TOGGLE */}
         <div className="flex gap-2">
           <button onClick={() => setType("cp")}>CP</button>
           <button onClick={() => setType("chat")}>Chat</button>
         </div>
 
-        {/* LOADING */}
         {loading && <div>Loading...</div>}
 
-        {/* TOP 3 */}
         <div className="grid grid-cols-3 gap-2">
-          {(top || []).map((u, i) => (
+          {top.map((u, i) => (
             <div key={u.user_id} className="bg-white/5 p-3 rounded-xl text-center">
               <img src={avatar(u.avatar_seed)} className="w-12 mx-auto" />
-
               <div className="mt-2 font-semibold">{u.display_name}</div>
-
               <div className="text-xs opacity-70">
                 {u.value} {u.unit}
               </div>
@@ -177,9 +165,8 @@ export default function MiniApp() {
           ))}
         </div>
 
-        {/* LIST */}
         <div className="space-y-2">
-          {(rows || []).map((u) => (
+          {rows.map((u) => (
             <div
               key={u.user_id}
               className="flex items-center gap-3 bg-white/5 p-3 rounded-xl"
@@ -203,7 +190,6 @@ export default function MiniApp() {
           ))}
         </div>
 
-        {/* ME */}
         {me && (
           <div className="bg-cyan-500/10 p-3 rounded-xl">
             <div className="flex items-center gap-3">
