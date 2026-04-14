@@ -5,6 +5,7 @@ type Period = "mingguan" | "harian";
 
 type LeaderboardRow = {
   rank: number;
+  user_id: string | number;
   display_name: string;
   username?: string | null;
   value: number;
@@ -14,29 +15,31 @@ type ProfileUser = {
   user_id: string | number;
   first_name: string;
   username?: string | null;
-  current_rank: string;
-  cp_mingguan: number;
+  chat_id: string | number;
   chat_mingguan: number;
+  cp_mingguan: number;
   total_chat: number;
   total_cp: number;
+  custom_title?: string | null;
+  last_chat_mingguan?: string | null;
+  highest_rank?: string | null;
+  highest_rank_value?: number | null;
+  current_rank: string;
+};
+
+type TelegramSnapshot = {
+  initData: string;
+  user: {
+    id: number;
+    username?: string;
+    first_name?: string;
+  } | null;
+  version?: string | null;
 };
 
 declare global {
   interface Window {
-    Telegram?: {
-      WebApp?: {
-        ready: () => void;
-        expand: () => void;
-        initData?: string;
-        initDataUnsafe?: {
-          user?: {
-            id: number;
-            username?: string;
-            first_name?: string;
-          };
-        };
-      };
-    };
+    __TG__?: TelegramSnapshot;
   }
 }
 
@@ -44,12 +47,13 @@ const API = "https://anilocp.vercel.app/api/miniapp";
 const CHAT_ID = "-1001236366475";
 
 export default function MiniApp(): JSX.Element {
-  const [tg, setTg] = useState<NonNullable<Window["Telegram"]>["WebApp"] | null>(null);
+  const [tg, setTg] = useState<TelegramSnapshot | null>(null);
   const [debugText, setDebugText] = useState("init...");
   const [view, setView] = useState<View>("board");
   const [period, setPeriod] = useState<Period>("mingguan");
   const [loading, setLoading] = useState(true);
   const [contentHtml, setContentHtml] = useState<string>('<div class="loading">Loading...</div>');
+  const [errorText, setErrorText] = useState<string | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   const title = useMemo(() => {
@@ -57,35 +61,42 @@ export default function MiniApp(): JSX.Element {
   }, [view]);
 
   const subtitle = useMemo(() => {
-    const user = tg?.initDataUnsafe?.user;
+    const user = tg?.user;
     if (view === "board") return "Anime Lovers Indo";
-    return `@${user?.username || user?.first_name || ""}`;
+    return `@${user?.username || user?.first_name || "-"}`;
   }, [view, tg]);
 
   useEffect(() => {
-    const app = window.Telegram?.WebApp ?? null;
-    if (!app) return;
+    const snapshot = window.__TG__ || null;
+    setTg(snapshot);
 
-    setTg(app);
-    app.ready();
-    app.expand();
+    if (!snapshot) {
+      setDebugText("TG:false | len:0 | id:- | @-");
+      setLoading(false);
+      setErrorText("Telegram snapshot tidak tersedia.");
+      return;
+    }
+
+    setDebugText(
+      `TG:true | len:${snapshot.initData?.length || 0} | id:${snapshot.user?.id || "-"} | @${snapshot.user?.username || "-"}`
+    );
   }, []);
 
   useEffect(() => {
-    const app = tg;
-    const user = app?.initDataUnsafe?.user;
+    const snapshot = window.__TG__ || null;
+    const user = snapshot?.user;
 
     setDebugText(
-      `TG:${!!app} | len:${app?.initData?.length || 0} | id:${user?.id || "-"} | @${user?.username || "-"}`
+      `TG:${!!snapshot} | len:${snapshot?.initData?.length || 0} | id:${user?.id || "-"} | @${user?.username || "-"}`
     );
   }, [tg, view, period]);
 
   useEffect(() => {
     if (!tg) return;
 
-    const app = tg;
+    const snapshot = tg;
 
-    const waitForInitData = async () => {
+    const waitForInitData = () => {
       let tries = 0;
 
       if (intervalRef.current) {
@@ -94,22 +105,23 @@ export default function MiniApp(): JSX.Element {
       }
 
       intervalRef.current = window.setInterval(() => {
-        const user = app.initDataUnsafe?.user;
+        const user = snapshot.user;
+
         setDebugText(
-          `TG:${!!app} | len:${app.initData?.length || 0} | id:${user?.id || "-"} | @${user?.username || "-"}`
+          `TG:${!!snapshot} | len:${snapshot.initData?.length || 0} | id:${user?.id || "-"} | @${user?.username || "-"}`
         );
 
-        if ((app.initData && app.initData.length > 50) || tries++ > 50) {
+        if ((snapshot.initData && snapshot.initData.length > 50) || tries++ > 50) {
           if (intervalRef.current) {
             window.clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
-          loadBoard();
+          void loadBoard();
         }
       }, 100);
     };
 
-    void waitForInitData();
+    waitForInitData();
 
     return () => {
       if (intervalRef.current) {
@@ -121,79 +133,94 @@ export default function MiniApp(): JSX.Element {
   }, [tg]);
 
   async function loadBoard() {
-    const app = tg;
-    if (!app) return;
+    const snapshot = tg;
+    if (!snapshot) return;
 
     setView("board");
     setLoading(true);
+    setErrorText(null);
     setContentHtml('<div class="loading">Loading...</div>');
 
-    const r = await fetch(`${API}/leaderboard?chat_id=${CHAT_ID}&type=cp&period=${period}`);
-    const d = await r.json();
+    try {
+      const r = await fetch(`${API}/leaderboard?chat_id=${CHAT_ID}&type=cp&period=${period}`);
+      const d = await r.json();
 
-    const rows: LeaderboardRow[] = d.rows || [];
-    const html =
-      rows
-        .map(
-          (x) => `
-        <div class="card row">
-          <div class="rank">#${x.rank}</div>
-          <div style="flex:1">
-            <div class="name">${escapeHtml(x.display_name)}</div>
-            ${x.username ? `<div class="user">@${escapeHtml(x.username)}</div>` : ""}
-          </div>
-          <div class="val">${Number(x.value).toLocaleString("id-ID")}</div>
-        </div>`
-        )
-        .join("") || '<div class="loading">Kosong</div>';
+      if (!r.ok || !d?.ok) {
+        throw new Error(d?.error || "Gagal memuat leaderboard");
+      }
 
-    setContentHtml(html);
-    setLoading(false);
+      const rows: LeaderboardRow[] = d.rows || [];
+      const html =
+        rows
+          .map(
+            (x) => `
+              <div class="card row">
+                <div class="rank">#${x.rank}</div>
+                <div style="flex:1">
+                  <div class="name">${escapeHtml(x.display_name)}</div>
+                  ${x.username ? `<div class="user">@${escapeHtml(x.username)}</div>` : ""}
+                </div>
+                <div class="val">${Number(x.value || 0).toLocaleString("id-ID")}</div>
+              </div>`
+          )
+          .join("") || '<div class="loading">Kosong</div>';
+
+      setContentHtml(html);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Gagal memuat leaderboard";
+      setErrorText(message);
+      setContentHtml(`<div class="loading">${escapeHtml(message)}</div>`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function loadProfile() {
-    const app = tg;
-    if (!app) return;
+    const snapshot = tg;
+    if (!snapshot) return;
 
     setView("profile");
     setLoading(true);
+    setErrorText(null);
     setContentHtml('<div class="loading">Loading profile...</div>');
 
-    const r = await fetch(`${API}/profile?chat_id=${CHAT_ID}`, {
-      headers: { "X-Telegram-Init-Data": app.initData || "" },
-    });
-    const d = await r.json();
-    const u: ProfileUser = d.user;
+    try {
+      const r = await fetch(`${API}/profile?chat_id=${CHAT_ID}`, {
+        headers: { "X-Telegram-Init-Data": snapshot.initData || "" },
+      });
 
-    const userImgSeed = encodeURIComponent(u.username || u.first_name);
+      const d = await r.json();
 
-    const html = `
-      <div class="card" style="text-align:center;padding:20px">
-        <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${userImgSeed}" style="width:80px;height:80px;border-radius:16px;border:3px solid #0ea5e9" />
-        <h3 style="margin:10px 0 0">${escapeHtml(u.first_name)}</h3>
-        <div class="user">@${escapeHtml(u.username || String(u.user_id))}</div>
-      </div>
-      <div class="grid">
-        <div class="card"><div class="user">🏆 Rank</div><div style="font-weight:800;font-size:18px;margin-top:4px">${escapeHtml(
-          u.current_rank
-        )}</div></div>
-        <div class="card"><div class="user">📊 CP Minggu</div><div style="font-weight:800;font-size:18px;margin-top:4px">${Number(
-          u.cp_mingguan
-        ).toLocaleString("id-ID")}</div></div>
-        <div class="card"><div class="user">💬 Chat Minggu</div><div style="font-weight:800;font-size:18px;margin-top:4px">${Number(
-          u.chat_mingguan
-        ).toLocaleString("id-ID")}</div></div>
-        <div class="card"><div class="user">💬 Total Chat</div><div style="font-weight:800;font-size:18px;margin-top:4px">${Number(
-          u.total_chat
-        ).toLocaleString("id-ID")}</div></div>
-      </div>
-      <div class="big"><div style="font-size:12px;opacity:.8">⚡ TOTAL CP</div><div style="font-size:28px;font-weight:900">${Number(
-        u.total_cp
-      ).toLocaleString("id-ID")}</div></div>
-    `;
+      if (!r.ok || !d?.ok || !d?.user) {
+        throw new Error(d?.error || "Data profil tidak tersedia");
+      }
 
-    setContentHtml(html);
-    setLoading(false);
+      const u: ProfileUser = d.user;
+      const userImgSeed = encodeURIComponent(String(u.username || u.first_name || u.user_id));
+
+      const html = `
+        <div class="card" style="text-align:center;padding:20px">
+          <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${userImgSeed}" style="width:80px;height:80px;border-radius:16px;border:3px solid #0ea5e9" />
+          <h3 style="margin:10px 0 0">${escapeHtml(u.first_name || "-")}</h3>
+          <div class="user">@${escapeHtml(String(u.username || u.user_id))}</div>
+        </div>
+        <div class="grid">
+          <div class="card"><div class="user">🏆 Rank</div><div style="font-weight:800;font-size:18px;margin-top:4px">${escapeHtml(u.current_rank || "-")}</div></div>
+          <div class="card"><div class="user">📊 CP Minggu</div><div style="font-weight:800;font-size:18px;margin-top:4px">${Number(u.cp_mingguan || 0).toLocaleString("id-ID")}</div></div>
+          <div class="card"><div class="user">💬 Chat Minggu</div><div style="font-weight:800;font-size:18px;margin-top:4px">${Number(u.chat_mingguan || 0).toLocaleString("id-ID")}</div></div>
+          <div class="card"><div class="user">💬 Total Chat</div><div style="font-weight:800;font-size:18px;margin-top:4px">${Number(u.total_chat || 0).toLocaleString("id-ID")}</div></div>
+        </div>
+        <div class="big"><div style="font-size:12px;opacity:.8">⚡ TOTAL CP</div><div style="font-size:28px;font-weight:900">${Number(u.total_cp || 0).toLocaleString("id-ID")}</div></div>
+      `;
+
+      setContentHtml(html);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Gagal memuat profile";
+      setErrorText(message);
+      setContentHtml(`<div class="loading">${escapeHtml(message)}</div>`);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -206,18 +233,6 @@ export default function MiniApp(): JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period, view, tg]);
-
-  const handleTabClick = (p: Period) => {
-    setPeriod(p);
-  };
-
-  const handleBoardClick = () => {
-    setView("board");
-  };
-
-  const handleProfileClick = () => {
-    setView("profile");
-  };
 
   return (
     <div style={styles.page}>
@@ -236,18 +251,22 @@ export default function MiniApp(): JSX.Element {
         <button
           className={`tab ${period === "mingguan" ? "active" : ""}`}
           data-p="mingguan"
-          onClick={() => handleTabClick("mingguan")}
+          onClick={() => setPeriod("mingguan")}
         >
           Mingguan
         </button>
         <button
           className={`tab ${period === "harian" ? "active" : ""}`}
           data-p="harian"
-          onClick={() => handleTabClick("harian")}
+          onClick={() => setPeriod("harian")}
         >
           Harian
         </button>
       </div>
+
+      {errorText && view === "board" ? (
+        <div className="loading">{errorText}</div>
+      ) : null}
 
       <div
         id="content"
@@ -256,13 +275,13 @@ export default function MiniApp(): JSX.Element {
       />
 
       <div className="nav">
-        <button id="btn-board" className={`navbtn ${view === "board" ? "active" : ""}`} onClick={handleBoardClick}>
+        <button id="btn-board" className={`navbtn ${view === "board" ? "active" : ""}`} onClick={() => setView("board")}>
           📊 Board
         </button>
         <button
           id="btn-profile"
           className={`navbtn ${view === "profile" ? "active" : ""}`}
-          onClick={handleProfileClick}
+          onClick={() => setView("profile")}
         >
           👤 Profile
         </button>
