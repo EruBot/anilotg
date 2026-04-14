@@ -41,7 +41,6 @@ export default function MiniApp() {
     tg.ready();
     tg.expand();
 
-    // 1. coba dari start_param
     const start = tg.initDataUnsafe?.start_param;
 
     if (start) {
@@ -55,7 +54,7 @@ export default function MiniApp() {
     }
   }
 
-  // 2. fallback URL (WAJIB untuk debug & kasus Telegram bug)
+  // fallback URL
   const params = new URLSearchParams(window.location.search);
   const urlChatId = params.get("chat_id");
 
