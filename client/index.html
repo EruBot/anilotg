@@ -10,6 +10,28 @@
     <meta name="description" content="Komunitas anime terbesar di Telegram Indonesia. Bergabunglah dengan 15k+ member dan nikmati diskusi anime setiap hari." />
     <meta name="theme-color" content="#a78bfa" />
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<script>
+(function () {
+  const tg = window.Telegram?.WebApp;
+
+  // FORCE READY SECEPAT MUNGKIN
+  try {
+    tg?.ready();
+    tg?.expand();
+  } catch (e) {}
+
+  // HARD SNAPSHOT (INI KUNCI)
+  window.__TG__ = {
+    initData: tg?.initData || "",
+    user: tg?.initDataUnsafe?.user || null,
+    version: tg?.version || null
+  };
+
+  // DEBUG REAL
+  console.log("SNAPSHOT:", window.__TG__);
+})();
+</script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
