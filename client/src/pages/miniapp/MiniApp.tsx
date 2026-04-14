@@ -54,15 +54,15 @@ export default function MiniApp() {
     }
   }
 
-  // fallback URL
+  // fallback URL (WAJIB)
   const params = new URLSearchParams(window.location.search);
   const urlChatId = params.get("chat_id");
 
   if (urlChatId) {
     setChatId(urlChatId);
   }
-
 }, [tg]);
+  
 
     // 🔥 FALLBACK (browser test)
     const params = new URLSearchParams(window.location.search);
