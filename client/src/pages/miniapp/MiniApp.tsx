@@ -1,107 +1,57 @@
 import { useEffect, useState } from "react";
 
 const API = "https://anilocp.vercel.app/api/miniapp";
-const CHAT_ID = "-1001236366475"; // Anime Lovers Indo
-
-type Row = { rank:number; user_id:string; display_name:string; username:string|null; value:number };
-type Profile = { user_id:string; first_name:string; username:string|null; chat_mingguan:number; cp_mingguan:number; total_chat:number; total_cp:number; current_rank:string };
+const CHAT_ID = "-1001236366475";
 
 export default function MiniApp(){
   const [tg,setTg]=useState<any>(null);
+  const [debug,setDebug]=useState("init...");
   const [view,setView]=useState<"board"|"profile">("board");
-  const [period,setPeriod]=useState<"harian"|"mingguan">("mingguan");
-  const [rows,setRows]=useState<Row[]>([]);
-  const [profile,setProfile]=useState<Profile|null>(null);
-  const [loading,setLoading]=useState(true);
+  const [profile,setProfile]=useState<any>(null);
 
-  // init Telegram - sekarang pasti dapat karena test kamu sudah hijau
   useEffect(()=>{
     const w=(window as any).Telegram?.WebApp;
-    if(w){ w.ready(); w.expand(); setTg(w); }
+    if(w){ w.ready(); w.expand(); setTg(w); setDebug(`TG OK | initData ${w.initData?.length||0} | user ${w.initDataUnsafe?.user?.id}`); }
+    else setDebug("TG TIDAK ADA - dibuka di browser");
   },[]);
 
-  // leaderboard
   useEffect(()=>{
-    if(view!=="board") return;
-    setLoading(true);
-    fetch(`${API}/leaderboard?chat_id=${CHAT_ID}&type=cp&period=${period}`)
-      .then(r=>r.json()).then(d=>setRows(d.rows||[])).finally(()=>setLoading(false));
-  },[view,period]);
-
-  // profile - pakai initData yang sudah terbukti ada
-  useEffect(()=>{
-    if(view!=="profile" || !tg?.initData) return;
-    setLoading(true);
-    fetch(`${API}/profile?chat_id=${CHAT_ID}`,{
-      headers:{"X-Telegram-Init-Data": tg.initData}
-    }).then(r=>r.json()).then(d=>{
-      if(d.ok) setProfile(d.user);
-    }).finally(()=>setLoading(false));
+    if(view!=="profile"||!tg?.initData) return;
+    setDebug("fetch profile...");
+    fetch(`${API}/profile?chat_id=${CHAT_ID}`,{headers:{"X-Telegram-Init-Data":tg.initData}})
+      .then(r=>r.json()).then(d=>{ setProfile(d.user); setDebug(`profile loaded: ${d.user.first_name}`); });
   },[view,tg]);
 
   const user = tg?.initDataUnsafe?.user;
 
   return (
-    <div style={{background:"#020617",color:"#e2e8f0",minHeight:"100vh",padding:"16px 14px 80px",fontFamily:"system-ui"}}>
-      <h2 style={{margin:"0 0 4px",fontWeight:800}}>{view==="board"?"Leaderboard Chat Point":"Profile"}</h2>
-      <div style={{fontSize:12,opacity:.6,marginBottom:12}}>
-        {view==="board" ? "Anime Lovers Indo" : `@${user?.username || user?.first_name}`}
+    <div style={{background:"#020617",color:"#fff",minHeight:"100vh",padding:16,paddingBottom:80,fontFamily:"system-ui"}}>
+      <div style={{background:"#f59e0b22",border:"1px solid #f59e0b",padding:8,borderRadius:8,fontSize:12,marginBottom:12}}>
+        DEBUG: {debug}
       </div>
 
-      {view==="board" && (
-        <>
-          <div style={{display:"flex",gap:8,marginBottom:12}}>
-            {(["harian","mingguan"] as const).map(p=>(
-              <button key={p} onClick={()=>setPeriod(p)} style={{flex:1,padding:10,borderRadius:10,border:"1px solid #1e293b",background:period===p?"#2563eb":"#0f172a",color:"#fff",fontWeight:700}}>
-                {p==="harian"?"Harian":"Mingguan"}
-              </button>
-            ))}
-          </div>
-          {loading ? <div style={{opacity:.6,textAlign:"center",padding:40}}>Loading...</div> :
-            rows.map(r=>(
-              <div key={r.user_id} style={{display:"flex",alignItems:"center",gap:10,background:"#0f172a",border:"1px solid #1e293b",padding:"10px 12px",borderRadius:12,marginBottom:8}}>
-                <span style={{width:28,color:"#64748b",fontWeight:700}}>#{r.rank}</span>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:700}}>{r.display_name}</div>
-                  {r.username && <div style={{fontSize:11,opacity:.6}}>@{r.username}</div>}
-                </div>
-                <b style={{color:"#7dd3fc"}}>{r.value.toLocaleString("id-ID")}</b>
-              </div>
-            ))
-          }
-        </>
-      )}
-
+      <h2>{view==="profile"?"Profile":"Board"}</h2>
+      
       {view==="profile" && (
-        loading ? <div style={{opacity:.6,textAlign:"center",padding:40}}>Loading profile...</div> :
         profile ? (
-          <div>
-            <div style={{background:"linear-gradient(160deg,#0f172a,#0b1220)",border:"1px solid #1e293b",borderRadius:20,padding:24,textAlign:"center",marginBottom:14}}>
-              <img src={`https://api.dicebear.com/9.x/thumbs/svg?seed=${profile.username||profile.first_name}`} style={{width:80,height:80,borderRadius:16,border:"3px solid #0ea5e9"}}/>
-              <h3 style={{margin:"10px 0 0"}}>{profile.first_name}</h3>
-              <div style={{opacity:.6,fontSize:13}}>@{profile.username || profile.user_id}</div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-              <Card label="🏆 Rank" value={profile.current_rank}/>
-              <Card label="📊 CP Minggu" value={profile.cp_mingguan.toLocaleString("id-ID")}/>
-              <Card label="💬 Chat Minggu" value={profile.chat_mingguan.toLocaleString("id-ID")}/>
-              <Card label="💬 Total Chat" value={profile.total_chat.toLocaleString("id-ID")}/>
-            </div>
-            <div style={{marginTop:12,background:"linear-gradient(135deg,#1e40af,#0ea5e9)",padding:18,borderRadius:16,textAlign:"center"}}>
-              <div style={{fontSize:12,opacity:.8}}>⚡ TOTAL CP</div>
-              <div style={{fontSize:28,fontWeight:900}}>{profile.total_cp.toLocaleString("id-ID")}</div>
+          <div style={{background:"#0f172a",padding:20,borderRadius:16,textAlign:"center"}}>
+            <img src={`https://api.dicebear.com/9.x/thumbs/svg?seed=${profile.username||"x"}`} style={{width:70,height:70,borderRadius:12}}/>
+            <h3>{profile.first_name}</h3>
+            <div style={{opacity:.6}}>@{profile.username || user?.username || "no-username"} (ID: {profile.user_id})</div>
+            <div style={{marginTop:16,display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div>CP: {profile.cp_mingguan}</div>
+              <div>Chat: {profile.chat_mingguan}</div>
+              <div>Total CP: {profile.total_cp}</div>
+              <div>Rank: {profile.current_rank}</div>
             </div>
           </div>
-        ) : <div style={{color:"#fbbf24"}}>Tidak ada data. Chat dulu sekali di grup.</div>
+        ) : <div>Loading...</div>
       )}
 
-      <div style={{position:"fixed",bottom:0,left:0,right:0,display:"flex",gap:8,padding:10,background:"#020617ee",borderTop:"1px solid #1e293b"}}>
-        <button onClick={()=>setView("board")} style={navBtn(view==="board")}>📊 Board</button>
-        <button onClick={()=>setView("profile")} style={navBtn(view==="profile")}>👤 Profile</button>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,display:"flex"}}>
+        <button onClick={()=>setView("board")} style={{flex:1,padding:14,background:"#1e293b",color:"#fff",border:0}}>Board</button>
+        <button onClick={()=>setView("profile")} style={{flex:1,padding:14,background:"#1e293b",color:"#fff",border:0}}>Profile</button>
       </div>
     </div>
   );
 }
-
-const Card=({label,value}:{label:string;value:string})=><div style={{background:"#0f172a",border:"1px solid #1e293b",borderRadius:12,padding:12}}><div style={{fontSize:11,opacity:.7}}>{label}</div><div style={{fontWeight:800,fontSize:18,marginTop:4}}>{value}</div></div>;
-const navBtn=(a:boolean)=>({flex:1,padding:12,borderRadius:10,border:"1px solid #1e293b",background:a?"#2563eb":"#0f172a",color:"#fff",fontWeight:700});
