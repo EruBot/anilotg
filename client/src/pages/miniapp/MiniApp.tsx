@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Period = "harian" | "mingguan";
@@ -43,7 +43,7 @@ const PERIODS: { key: Period; label: string }[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getTG(): any {
-  return (window as any)?.Telegram?.WebApp?? null;
+  return (window as any)?.Telegram?.WebApp ?? null;
 }
 
 function decodeStartParam(raw: string): string | null {
@@ -81,7 +81,7 @@ function fmt(n: number): string {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function MiniApp() {
-  const tg = useMemo(() => getTG(), []);
+  const [tg, setTg] = useState<any>(null);
   const [chatId] = useState<string>(() => resolveChatId());
   const [view, setView] = useState<View>("board");
 
@@ -100,11 +100,15 @@ export default function MiniApp() {
   const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!tg) return;
-    tg.ready(); tg.expand();
-    tg.setHeaderColor?.("#020617");
-    tg.setBackgroundColor?.("#020617");
-  }, [tg]);
+    const app = getTG();
+    if (!app) return;
+
+    setTg(app);
+    app.ready();
+    app.expand();
+    app.setHeaderColor?.("#020617");
+    app.setBackgroundColor?.("#020617");
+  }, []);
 
   // Fetch Board CP only
   useEffect(() => {
