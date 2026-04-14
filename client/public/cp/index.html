@@ -1,114 +1,41 @@
-<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
-<title>Chat Point</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#020617;color:#e2e8f0;font-family:system-ui,-apple-system,Segoe UI,Roboto;padding:16px 14px 90px}
+
+
+Tanya Meta AI...
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="https://telegram.org/js/telegram-web-app.js"></script><title>CP Game</title>
+<style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#020617;color:#e2e8f0;font-family:system-ui;padding:16px 14px 100px}
 h2{margin:0 0 4px;font-weight:800}.sub{font-size:12px;opacity:.6;margin-bottom:12px}
-.tabs{display:flex;gap:8px;margin-bottom:12px}button{font:inherit;cursor:pointer}
-.tab{flex:1;padding:10px;border-radius:10px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-weight:700}
-.tab.active{background:#2563eb;border-color:#2563eb}
 .card{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:12px;margin-bottom:8px}
-.row{display:flex;align-items:center;gap:10px}.rank{width:28px;color:#64748b;font-weight:700}
-.name{flex:1;font-weight:700}.user{font-size:11px;opacity:.6}.val{font-weight:800;color:#7dd3fc}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.big{background:linear-gradient(135deg,#1e40af,#0ea5e9);padding:18px;border-radius:16px;text-align:center;margin-top:12px}
-.nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px;background:#020617ee;border-top:1px solid #1e293b}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:end;justify-content:space-around;padding:10px 10px 18px;background:#020617ee;border-top:1px solid #1e293b}
 .navbtn{flex:1;padding:12px;border-radius:10px;border:1px solid #1e293b;background:#0f172a;color:#fff;font-weight:700}
 .navbtn.active{background:#2563eb}
-.loading{opacity:.6;text-align:center;padding:40px}
-.debug{background:#f59e0b22;border:1px solid #f59e0b;padding:6px 8px;border-radius:8px;font-size:11px;margin-bottom:10px;font-family:monospace}
-</style>
-</head>
-<body>
+.tap-main{position:relative;top:-20px;width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#0ea5e9);border:4px solid #020617;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 6px 20px #0ea5e955}
+.game-wrap{text-align:center;padding-top:20px}.tap-btn{width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,#1e40af,#0f172a);border:6px solid #0ea5e9;margin:20px auto;display:flex;align-items:center;justify-content:center;font-size:48px;font-weight:900;user-select:none;touch-action:manipulation}
+.tap-btn:active{transform:scale(.95)}.counter{font-size:42px;font-weight:900;color:#7dd3fc}.debug{background:#f59e0b22;border:1px solid #f59e0b;padding:6px;border-radius:8px;font-size:11px;margin-bottom:10px;font-family:monospace}
+</style></head><body>
 <div id="debug" class="debug">init...</div>
-<h2 id="title">Leaderboard Chat Point</h2>
-<div id="subtitle" class="sub">Anime Lovers Indo</div>
-
-<div id="board-controls" class="tabs">
-  <button class="tab active" data-p="mingguan">Mingguan</button>
-  <button class="tab" data-p="harian">Harian</button>
-</div>
-
-<div id="content" class="loading">Loading...</div>
-
+<h2 id="title">Leaderboard</h2><div id="subtitle" class="sub">Anime Lovers Indo</div>
+<div id="content"></div>
 <div class="nav">
-  <button id="btn-board" class="navbtn active">📊 Board</button>
-  <button id="btn-profile" class="navbtn">👤 Profile</button>
+  <button id="btn-board" class="navbtn active">📊</button>
+  <button id="btn-game" class="tap-main">⚡</button>
+  <button id="btn-profile" class="navbtn">👤</button>
 </div>
-
 <script>
-const API = "https://anilocp.vercel.app/api/miniapp";
-const CHAT_ID = "-1001236366475";
+const API="https://anilocp.vercel.app/api/miniapp"; const CHAT_ID="-1001236366475";
+const tg=Telegram.WebApp; tg.ready(); tg.expand();
+const debug=document.getElementById('debug'); const content=document.getElementById('content');
+let lastTap=0; let myCp=0;
 
-const tg = window.Telegram.WebApp;
-tg.ready(); tg.expand();
+function setD(){debug.textContent=`id:${tg.initDataUnsafe?.user?.id} len:${tg.initData?.length||0}`;} setInterval(setD,500);
 
-const debug = document.getElementById('debug');
-const content = document.getElementById('content');
-const title = document.getElementById('title');
-const subtitle = document.getElementById('subtitle');
-let view = 'board';
-let period = 'mingguan';
+async function loadBoard(){document.getElementById('title').textContent='Leaderboard'; const r=await fetch(`${API}/leaderboard?chat_id=${CHAT_ID}&type=cp&period=mingguan`); const d=await r.json(); content.innerHTML=(d.rows||[]).map(x=>`<div class="card" style="display:flex;gap:10px"><div style="width:28px;color:#64748b">#${x.rank}</div><div style="flex:1"><b>${x.display_name}</b>${x.username?`<div style="font-size:11px;opacity:.6">@${x.username}</div>`:''}</div><b style="color:#7dd3fc">${Number(x.value).toLocaleString('id-ID')}</b></div>`).join('');}
+async function loadProfile(){document.getElementById('title').textContent='Profile'; const r=await fetch(`${API}/profile?chat_id=${CHAT_ID}`,{headers:{'X-Telegram-Init-Data':tg.initData}}); const d=await r.json(); const u=d.user; myCp=u.total_cp; content.innerHTML=`<div class="card" style="text-align:center"><h3>${u.first_name}</h3><div>@${u.username||''}</div><div style="margin-top:12px">Total CP: <b>${u.total_cp.toLocaleString('id-ID')}</b></div></div>`;}
+function loadGame(){document.getElementById('title').textContent='Tap Game'; content.innerHTML=`<div class="game-wrap"><div class="counter" id="cp">${myCp.toLocaleString('id-ID')}</div><div style="opacity:.7;margin-bottom:10px">1 tap = 1 CP • cooldown 1s</div><div class="tap-btn" id="tap">TAP</div><div id="status" style="height:20px;opacity:.7"></div></div>`; document.getElementById('tap').onclick=doTap;}
+async function doTap(){ const now=Date.now(); if(now-lastTap<1000){document.getElementById('status').textContent=`tunggu ${Math.ceil((1000-(now-lastTap))/1000)}s`; return;} lastTap=now; document.getElementById('tap').style.transform='scale(.9)'; setTimeout(()=>document.getElementById('tap').style.transform='',100); const r=await fetch(`${API}/tap`,{method:'POST',headers:{'X-Telegram-Init-Data':tg.initData}}); const d=await r.json(); if(d.ok){ myCp=d.total_cp; document.getElementById('cp').textContent=myCp.toLocaleString('id-ID'); document.getElementById('status').textContent='+1 CP!'; tg.HapticFeedback?.impactOccurred('light'); } else { document.getElementById('status').textContent=d.error==='cooldown'?'terlalu cepat!':'error'; } }
 
-function setDebug(){
-  debug.textContent = `TG:${!!tg} | len:${tg.initData?.length||0} | id:${tg.initDataUnsafe?.user?.id||'-'} | @${tg.initDataUnsafe?.user?.username||'-'}`;
-}
-setDebug();
-
-// tunggu initData sampai ada
-let tries=0;
-const wait = setInterval(()=>{
-  setDebug();
-  if(tg.initData && tg.initData.length>50 || tries++>50){
-    clearInterval(wait);
-    loadBoard();
-  }
-},100);
-
-async function loadBoard(){
-  view='board'; title.textContent='Leaderboard Chat Point'; subtitle.textContent='Anime Lovers Indo';
-  document.getElementById('board-controls').style.display='flex';
-  content.innerHTML='<div class="loading">Loading...</div>';
-  const r = await fetch(`${API}/leaderboard?chat_id=${CHAT_ID}&type=cp&period=${period}`);
-  const d = await r.json();
-  content.innerHTML = (d.rows||[]).map(x=>`
-    <div class="card row">
-      <div class="rank">#${x.rank}</div>
-      <div style="flex:1"><div class="name">${x.display_name}</div>${x.username?`<div class="user">@${x.username}</div>`:''}</div>
-      <div class="val">${Number(x.value).toLocaleString('id-ID')}</div>
-    </div>`).join('') || '<div class="loading">Kosong</div>';
-}
-
-async function loadProfile(){
-  view='profile'; title.textContent='Profile'; subtitle.textContent=`@${tg.initDataUnsafe?.user?.username||tg.initDataUnsafe?.user?.first_name}`;
-  document.getElementById('board-controls').style.display='none';
-  content.innerHTML='<div class="loading">Loading profile...</div>';
-  const r = await fetch(`${API}/profile?chat_id=${CHAT_ID}`,{headers:{'X-Telegram-Init-Data':tg.initData}});
-  const d = await r.json();
-  const u = d.user;
-  content.innerHTML = `
-    <div class="card" style="text-align:center;padding:20px">
-      <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${u.username||u.first_name}" style="width:80px;height:80px;border-radius:16px;border:3px solid #0ea5e9">
-      <h3 style="margin:10px 0 0">${u.first_name}</h3>
-      <div class="user">@${u.username||u.user_id}</div>
-    </div>
-    <div class="grid">
-      <div class="card"><div class="user">🏆 Rank</div><div style="font-weight:800;font-size:18px;margin-top:4px">${u.current_rank}</div></div>
-      <div class="card"><div class="user">📊 CP Minggu</div><div style="font-weight:800;font-size:18px;margin-top:4px">${u.cp_mingguan.toLocaleString('id-ID')}</div></div>
-      <div class="card"><div class="user">💬 Chat Minggu</div><div style="font-weight:800;font-size:18px;margin-top:4px">${u.chat_mingguan.toLocaleString('id-ID')}</div></div>
-      <div class="card"><div class="user">💬 Total Chat</div><div style="font-weight:800;font-size:18px;margin-top:4px">${u.total_chat.toLocaleString('id-ID')}</div></div>
-    </div>
-    <div class="big"><div style="font-size:12px;opacity:.8">⚡ TOTAL CP</div><div style="font-size:28px;font-weight:900">${u.total_cp.toLocaleString('id-ID')}</div></div>
-  `;
-}
-
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); period=b.dataset.p; loadBoard(); });
-document.getElementById('btn-board').onclick=()=>{ document.getElementById('btn-board').classList.add('active'); document.getElementById('btn-profile').classList.remove('active'); loadBoard(); };
-document.getElementById('btn-profile').onclick=()=>{ document.getElementById('btn-profile').classList.add('active'); document.getElementById('btn-board').classList.remove('active'); loadProfile(); };
-</script>
-</body>
-</html>
+document.getElementById('btn-board').onclick=()=>{setActive('board');loadBoard();};
+document.getElementById('btn-profile').onclick=()=>{setActive('profile');loadProfile();};
+document.getElementById('btn-game').onclick=()=>{setActive('game');loadGame();};
+function setActive(v){document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active')); if(v!=='game')document.getElementById('btn-'+v).classList.add('active');}
+loadBoard();
+</script></body></html>
