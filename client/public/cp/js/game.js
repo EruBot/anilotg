@@ -5,7 +5,7 @@ const subtitle = document.getElementById('subtitle');
 const content = document.getElementById('content');
 const boardControls = document.getElementById('board-controls');
 
-const COOLDOWN_MS = 167; // <--- UBAH DI SINI, 200 = 0.2 detik
+const COOLDOWN_MS = 5000; // <--- UBAH DI SINI, 200 = 0.2 detik
 
 export async function loadGame(){
   title.textContent='Tap Game';
