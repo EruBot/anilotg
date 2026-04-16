@@ -12,17 +12,19 @@ export async function loadGame(){
   subtitle.textContent=`1 tap = 1 CP • cooldown ${COOLDOWN_MS}ms`;
   boardControls.style.display='none';
   
+  const uid = tg.initDataUnsafe?.user?.id;
   if(!state.myProfile){
-    const r = await fetch(`${API}/profile?chat_id=${CHAT_ID}`,{headers:{'X-Telegram-Init-Data':tg.initData}});
-    state.myProfile = (await r.json()).user;
+    const r = await fetch(`${API}/profile?chat_id=${CHAT_ID}&user_id=${uid}`,{headers:{'X-Telegram-Init-Data':tg.initData}});
+    const j = await r.json();
+    state.myProfile = j.user;
   }
   const cp = state.myProfile.total_cp||0;
   content.innerHTML = `
     <div class="game-wrap">
       <div class="counter" id="cp">${Number(cp).toLocaleString('id-ID')}</div>
-      <div style="opacity:.7">Total CP kamu</div>
+      <div style="opacity:.7;color:var(--muted)">Total CP kamu</div>
       <div class="tap-btn" id="tap">TAP</div>
-      <div id="status" style="height:22px;opacity:.8;margin-top:8px"></div>
+      <div id="status" style="height:22px;opacity:.8;margin-top:8px;color:var(--muted)"></div>
     </div>`;
   document.getElementById('tap').onclick = doTap;
 }
