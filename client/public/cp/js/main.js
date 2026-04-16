@@ -1,7 +1,7 @@
 import { loadBoard } from './board.js';
 
 export const tg = window.Telegram.WebApp;
-tg.ready(); 
+tg.ready();
 tg.expand();
 
 export const API = "https://anilocp.vercel.app/api/miniapp";
@@ -13,16 +13,16 @@ export const state = {
   myProfile: null
 };
 
-// debug info
+// debug
 const debug = document.getElementById('debug');
 function setDebug(){
   const u = tg.initDataUnsafe?.user;
   debug.textContent = `TG:${!!tg} | len:${tg.initData?.length||0} | id:${u?.id||'-'} | @${u?.username||'-'}`;
 }
-setDebug(); 
+setDebug();
 setInterval(setDebug, 800);
 
-// tunggu initData Telegram siap
+// tunggu Telegram initData
 let tries = 0;
 const wait = setInterval(() => {
   if ((tg.initData && tg.initData.length > 50) || tries++ > 80) {
@@ -32,21 +32,21 @@ const wait = setInterval(() => {
   }
 }, 100);
 
-// === NAVIGATION ===
+// === NAV ===
 const btnBoard = document.getElementById('btn-board');
-const btnProfile = document.getElementById('btn-profile');
+const btnShop = document.getElementById('btn-shop');
 const btnGame = document.getElementById('btn-game');
-const btnShop = document.getElementById('btn-shop'); // tambahin tombol ini di HTML kalau mau
+const btnProfile = document.getElementById('btn-profile');
 
-btnBoard.onclick = () => { 
-  setActive('board'); 
-  loadBoard(); 
+btnBoard.onclick = () => {
+  setActive('board');
+  loadBoard();
 };
 
-btnProfile.onclick = async () => {
-  setActive('profile');
-  const { loadProfile } = await import('./profile.js');
-  loadProfile();
+btnShop.onclick = async () => {
+  setActive('shop');
+  const { loadShop } = await import('./shop.js');
+  loadShop();
 };
 
 btnGame.onclick = async () => {
@@ -55,28 +55,25 @@ btnGame.onclick = async () => {
   loadGame();
 };
 
-// SHOP - baru
-if (btnShop) {
-  btnShop.onclick = async () => {
-    setActive('shop');
-    const { loadShop } = await import('./shop.js');
-    loadShop();
-  };
-}
+btnProfile.onclick = async () => {
+  setActive('profile');
+  const { loadProfile } = await import('./profile.js');
+  loadProfile();
+};
 
 function setActive(v){
-  // matiin semua, nyalain yang dipilih
-  ['board','profile','game','shop'].forEach(key => {
-    document.getElementById(`btn-${key}`)?.classList.toggle('active', v === key);
-  });
+  btnBoard.classList.toggle('active', v === 'board');
+  btnShop.classList.toggle('active', v === 'shop');
+  btnGame.classList.toggle('active', v === 'game');
+  btnProfile.classList.toggle('active', v === 'profile');
 }
 
-// === TABS LEADERBOARD ===
+// === TABS ===
 document.querySelectorAll('.tab').forEach(b => {
   b.onclick = () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
-    state.period = b.dataset.p;
+    state.period = b.dataset.p; // 'mingguan' atau 'harian'
     loadBoard();
   };
 });
