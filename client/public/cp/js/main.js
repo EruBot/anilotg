@@ -38,7 +38,18 @@ function setActive(v){
   btnGame.classList.toggle('active', v==='game');
   btnMining.classList.toggle('active', v==='mining');
   btnProfile.classList.toggle('active', v==='profile');
-  document.getElementById('board-controls').style.display = v==='board'? 'flex' : 'none';
+  
+  const title = document.getElementById('title');
+  const subtitle = document.getElementById('subtitle');
+  const controls = document.getElementById('board-controls');
+  
+  controls.style.display = v==='board' ? 'flex' : 'none';
+  
+  if(v==='board'){ title.textContent='Leaderboard'; subtitle.textContent='Anime Lovers Indo'; }
+  if(v==='shop'){ title.textContent='Shop'; subtitle.textContent='Tukar CP kamu'; }
+  if(v==='game'){ title.textContent='Tap Game'; subtitle.textContent='1 tap = 1 CP'; }
+  if(v==='mining'){ title.textContent='Mining'; subtitle.textContent='20.000 MP / jam'; }
+  if(v==='profile'){ title.textContent='Profile'; subtitle.textContent='Statistik kamu'; }
 }
 
 document.querySelectorAll('.tab').forEach(b => {
