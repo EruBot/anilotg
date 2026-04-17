@@ -37,7 +37,9 @@ export async function loadMining() {
   let mp = 0, last = Date.now();
   try {
     const r = await fetch(`${API}/mining?action=status&initData=${encodeURIComponent(tg.initData)}`);
+    if(!r.ok) throw new Error('HTTP '+r.status);
     const j = await r.json();
+    if(j.error) throw new Error(j.error);
     mp = Number(j.mp_balance) || 0;
     last = new Date(j.last_claim_at).getTime() || Date.now();
   } catch(e){
