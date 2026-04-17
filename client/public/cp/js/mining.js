@@ -36,15 +36,21 @@ export async function loadMining() {
   // AMBIL DATA DARI SUPABASE
   let mp = 0, last = Date.now();
   try {
-    const r = await fetch(`${API}/mining?action=status&initData=${encodeURIComponent(tg.initData)}`);
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const j = await r.json();
+    const url = `${API}/mining?action=status&initData=${encodeURIComponent(tg.initData)}`;
+    console.log('FETCH:', url.slice(0,100));
+    const r = await fetch(url);
+    const text = await r.text(); // baca mentah dulu
+    if(!r.ok) throw new Error(`HTTP ${r.status}: ${text}`);
+    const j = JSON.parse(text);
     if(j.error) throw new Error(j.error);
     mp = Number(j.mp_balance) || 0;
     last = new Date(j.last_claim_at).getTime() || Date.now();
+    document.getElementById('mp-timer').textContent = 'Sinkron...';
   } catch(e){
-    document.getElementById('mp-timer').textContent = 'Gagal load API';
-    return;
+    document.getElementById('mp-timer').textContent = 'Gagal: ' + e.message;
+    document.getElementById('mp-big').textContent = 'ERROR';
+    console.error(e);
+    return; // stop
   }
 
   function tick(){
