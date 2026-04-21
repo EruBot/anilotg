@@ -13,35 +13,69 @@ body{
     color:#fff;
 }
 
+/* HEADER */
 header{
-    padding:15px;
     background:#1c2233;
+    padding:15px;
     text-align:center;
     font-weight:bold;
 }
 
+/* ZOOM BUTTON */
+.zoom-control{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    background:#1c2233;
+    padding:10px;
+    border-radius:30px;
+    display:flex;
+    gap:10px;
+}
+
+.zoom-control button{
+    background:#2a3050;
+    border:none;
+    color:#fff;
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    cursor:pointer;
+    font-size:18px;
+}
+
+/* BRACKET */
 .container{
-    overflow-x:auto;
+    overflow:auto;
     padding:20px;
+}
+
+.scale-wrapper{
+    transform-origin: top left;
 }
 
 .bracket{
     display:flex;
-    gap:50px;
-    min-width:2000px;
+    gap:80px;
+    min-width:2200px;
 }
 
+/* ROUND */
 .round{
     display:flex;
     flex-direction:column;
-    gap:20px;
+    justify-content:center;
+    gap:60px;
+    position:relative;
 }
 
+/* MATCH */
 .match{
     background:#1e2538;
     padding:10px;
     border-radius:8px;
     width:220px;
+    position:relative;
 }
 
 .team{
@@ -51,28 +85,48 @@ header{
     border-bottom:1px solid #333;
 }
 
-.team:last-child{
-    border-bottom:none;
-}
+.team:last-child{border:none;}
 
-.winner{
-    color:#00ff99;
-}
+.winner{color:#00ff99;}
 
 .info{
     font-size:11px;
     color:#aaa;
+    margin-top:5px;
 }
 
+/* CONNECTOR LINES */
+.match::after{
+    content:"";
+    position:absolute;
+    right:-40px;
+    top:50%;
+    width:40px;
+    height:2px;
+    background:#555;
+}
+
+.round:not(:last-child) .match::before{
+    content:"";
+    position:absolute;
+    right:-40px;
+    top:50%;
+    width:2px;
+    height:60px;
+    background:#555;
+}
+
+/* TITLE */
 .title{
     text-align:center;
-    margin-bottom:10px;
     font-weight:bold;
+    margin-bottom:10px;
 }
 
+/* FINAL */
 .final{
     background:#2a3050;
-    padding:15px;
+    padding:20px;
     border-radius:10px;
     text-align:center;
 }
@@ -89,66 +143,60 @@ header{
 <header>TOURNAMENT MLBB 5v5 ANILO</header>
 
 <div class="container">
+<div id="scale" class="scale-wrapper">
+
 <div class="bracket">
 
-<!-- LEFT SIDE -->
+<!-- ROUND 32 -->
 <div class="round">
 <div class="title">ROUND 32</div>
 
-<!-- 1 -->
 <div class="match">
 <div class="team winner">AEXAYONG</div>
 <div class="team">PINK PANTHER</div>
-<div class="info">11:00 | Ryan</div>
+<div class="info">11:00 WIB | Ryan</div>
 </div>
 
-<!-- 2 -->
 <div class="match">
 <div class="team">TEAM SEIKO</div>
 <div class="team winner">JEDIR</div>
-<div class="info">11:00 | Aldi</div>
+<div class="info">11:00 WIB | Aldi</div>
 </div>
 
-<!-- 3 -->
 <div class="match">
 <div class="team">KING NSQUAD</div>
 <div class="team winner">KICAU KICAU MANIA</div>
-<div class="info">11:30 | Hafid</div>
+<div class="info">11:30 WIB | Hafid</div>
 </div>
 
-<!-- 4 -->
 <div class="match">
 <div class="team">OWO</div>
 <div class="team winner">AYAM ALOMANI</div>
-<div class="info">11:30 | Fikri</div>
+<div class="info">11:30 WIB | Fikri</div>
 </div>
 
-<!-- 5 -->
 <div class="match">
 <div class="team winner">JOKOWHY</div>
 <div class="team">DARK WOLF</div>
-<div class="info">12:00 | Ryan</div>
+<div class="info">12:00 WIB | Ryan</div>
 </div>
 
-<!-- 6 -->
 <div class="match">
 <div class="team">RUNAWAY TROOPS</div>
 <div class="team winner">WARUNG MUTU</div>
-<div class="info">12:00 | Aldi</div>
+<div class="info">12:00 WIB | Aldi</div>
 </div>
 
-<!-- 7 -->
 <div class="match">
 <div class="team">BRO HOLIC</div>
 <div class="team winner">JCS CAESAR</div>
-<div class="info">12:30 | Hafid</div>
+<div class="info">12:30 WIB | Hafid</div>
 </div>
 
-<!-- 8 -->
 <div class="match">
 <div class="team winner">BURONAN TELEGRAM</div>
 <div class="team">TEAM SHADOW</div>
-<div class="info">12:30 | Fikri</div>
+<div class="info">12:30 WIB | Fikri</div>
 </div>
 
 </div>
@@ -160,32 +208,32 @@ header{
 <div class="match">
 <div class="team">AEXAYONG</div>
 <div class="team">JEDIR</div>
-<div class="info">13:30 | Ryan</div>
+<div class="info">13:30 WIB</div>
 </div>
 
 <div class="match">
 <div class="team">KICAU KICAU MANIA</div>
 <div class="team">AYAM ALOMANI</div>
-<div class="info">20:30 | Hafid</div>
+<div class="info">20:30 WIB</div>
 </div>
 
 <div class="match">
 <div class="team">JOKOWHY</div>
 <div class="team">WARUNG MUTU</div>
-<div class="info">19:00 | Ryan</div>
+<div class="info">19:00 WIB</div>
 </div>
 
 <div class="match">
 <div class="team">JCS CAESAR</div>
 <div class="team">BURONAN TELEGRAM</div>
-<div class="info">23:00 | Hafid</div>
+<div class="info">23:00 WIB</div>
 </div>
 
 </div>
 
 <!-- QUARTER -->
 <div class="round">
-<div class="title">QUARTER</div>
+<div class="title">QUARTER FINAL</div>
 
 <div class="match"><div class="team">TBD</div><div class="team">TBD</div></div>
 <div class="match"><div class="team">TBD</div><div class="team">TBD</div></div>
@@ -194,7 +242,7 @@ header{
 
 <!-- SEMI -->
 <div class="round">
-<div class="title">SEMI</div>
+<div class="title">SEMI FINAL</div>
 
 <div class="match"><div class="team">TBD</div><div class="team">TBD</div></div>
 
@@ -220,62 +268,30 @@ header{
 
 </div>
 
-<!-- RIGHT SIDE -->
-<div class="round">
-<div class="title">ROUND 32</div>
-
-<div class="match">
-<div class="team winner">DSR</div>
-<div class="team">PEMUDA BERMANFAAT</div>
-<div class="info">13:00 | Ryan</div>
+</div>
+</div>
 </div>
 
-<div class="match">
-<div class="team">WK48</div>
-<div class="team winner">PLENGER</div>
-<div class="info">13:00 | Aldi</div>
+<!-- ZOOM BUTTON -->
+<div class="zoom-control">
+<button onclick="zoomOut()">-</button>
+<button onclick="zoomIn()">+</button>
 </div>
 
-<div class="match">
-<div class="team winner">AURORA BOREALIS</div>
-<div class="team">CEO MBG</div>
-<div class="info">13:30 | Hafid</div>
-</div>
+<script>
+let scale = 1;
 
-<div class="match">
-<div class="team">BAUL PLENGER</div>
-<div class="team winner">FAKULTAS JOPI</div>
-<div class="info">13:30 | Fikri</div>
-</div>
+function zoomIn(){
+    scale += 0.1;
+    document.getElementById("scale").style.transform = "scale("+scale+")";
+}
 
-<div class="match">
-<div class="team">114 CSLYMPUS</div>
-<div class="team winner">N1CS FAMILY</div>
-<div class="info">14:00 | Ryan</div>
-</div>
-
-<div class="match">
-<div class="team">ALWAYS ESPORT</div>
-<div class="team winner">TIM KICAU MANIA</div>
-<div class="info">14:00 | Aldi</div>
-</div>
-
-<div class="match">
-<div class="team">CUKO</div>
-<div class="team winner">NGIDE BOY</div>
-<div class="info">14:30 | Hafid</div>
-</div>
-
-<div class="match">
-<div class="team">WILD TACTICAL</div>
-<div class="team winner">FWB ESPROT</div>
-<div class="info">14:30 | Fikri</div>
-</div>
-
-</div>
-
-</div>
-</div>
+function zoomOut(){
+    scale -= 0.1;
+    if(scale < 0.5) scale = 0.5;
+    document.getElementById("scale").style.transform = "scale("+scale+")";
+}
+</script>
 
 </body>
 </html>
